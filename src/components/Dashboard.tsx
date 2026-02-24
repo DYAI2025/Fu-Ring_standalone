@@ -112,8 +112,8 @@ export function Dashboard({
         <div className="mb-8 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-xs text-amber-200">
           Einige Berechnungen konnten nicht live geladen werden. Es wurden teilweise Fallback-Daten genutzt:
           <ul className="mt-2 list-disc pl-4">
-            {apiIssues.map((issue) => (
-              <li key={`${issue.endpoint}-${issue.message}`}>
+            {apiIssues.map((issue, index) => (
+              <li key={index}>
                 <span className="font-semibold">{issue.endpoint}</span>: {issue.message}
               </li>
             ))}
