@@ -2,19 +2,60 @@
 <img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
 </div>
 
-# Run and deploy your AI Studio app
+# Astro-Noctum (Bazodiac)
 
-This contains everything you need to run your app locally.
-
-View your app in AI Studio: https://ai.studio/apps/ddb522b7-094a-4769-b16a-b6e1367268cf
-
-## Run Locally
-
-**Prerequisites:**  Node.js
-
+## Local Run
 
 1. Install dependencies:
    `npm install`
-2. Set the `VITE_GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
+2. Create `.env.local` from `.env.example` and fill all required values.
+3. Start development:
    `npm run dev`
+
+## Railway Deployment
+
+This repo is prepared for Railway with:
+- `railway.json` build/deploy commands
+- production server (`server.mjs`) to serve `dist/`
+- startup command `npm run start`
+
+### Required Railway Variables
+- `VITE_GEMINI_API_KEY`
+- `VITE_BAFE_BASE_URL`
+- `VITE_SUPABASE_URL` (default: `https://ykoijifgweoapitabgxx.supabase.co`)
+- `VITE_SUPABASE_ANON_KEY`
+- `VITE_ELEVENLABS_AGENT_ID` (default Levi Bazi agent)
+
+## Supabase Database Connection
+
+The app persists completed readings into Supabase via REST (`/rest/v1/readings`) from `src/services/supabase.ts`.
+
+Example table schema:
+
+```sql
+create table if not exists public.readings (
+  id bigint generated always as identity primary key,
+  created_at timestamptz not null default now(),
+  birth_input jsonb not null,
+  api_data jsonb not null,
+  interpretation text not null,
+  api_issues jsonb not null default '[]'::jsonb
+);
+
+alter table public.readings enable row level security;
+
+create policy "insert_readings_anon"
+on public.readings
+for insert
+to anon
+with check (true);
+```
+
+## ElevenLabs Voice Agent
+
+The dashboard embeds Levi Bazi via:
+
+```html
+<elevenlabs-convai agent-id="agent_9001kdhah7vrfh3rd05pakg8vppk"></elevenlabs-convai>
+<script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
+```

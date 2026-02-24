@@ -4,6 +4,7 @@ import { Dashboard } from "./components/Dashboard";
 import { Splash } from "./components/Splash";
 import { calculateAll, BirthData, ApiIssue } from "./services/api";
 import { generateInterpretation } from "./services/gemini";
+import { persistReading } from "./services/supabase";
 import { Volume2, VolumeX, User, Compass, LayoutGrid, Archive } from "lucide-react";
 
 export default function App() {
@@ -50,6 +51,15 @@ export default function App() {
 
       const aiInterpretation = await generateInterpretation(results);
       setInterpretation(aiInterpretation);
+
+      await persistReading({
+        birth_input: data,
+        api_data: results,
+        interpretation: aiInterpretation,
+        api_issues: results.issues,
+      }).catch((persistError) => {
+        console.warn("Supabase persist failed:", persistError);
+      });
     } catch (err: any) {
       console.error("API Error:", err);
       setError(
