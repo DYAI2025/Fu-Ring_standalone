@@ -180,8 +180,8 @@ export function Dashboard({
             <div>
               <div className="flex items-center justify-between mb-6">
                 <motion.div
-                  animate={{ scale: [1, 1.1, 1] }}
-                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                  animate={{ scale: [1, 1.15, 1], rotate: [0, 15, -15, 0] }}
+                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
                 >
                   <ArrowUp className="text-gold w-5 h-5" />
                 </motion.div>
