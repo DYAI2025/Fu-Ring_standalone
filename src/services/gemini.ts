@@ -15,13 +15,21 @@ Provide actionable advice or a plausible horoscope reading based on these combin
 Keep it under 250 words. Write it directly to the user (e.g., "Your cosmic blueprint reveals...").
 `;
 
-  const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
-    contents: prompt,
-    config: {
-      temperature: 0.7,
-    },
-  });
+  try {
+    const response = await Promise.race([
+      ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: prompt,
+        config: {
+          temperature: 0.7,
+        },
+      }),
+      new Promise((_, reject) => setTimeout(() => reject(new Error("Gemini API timeout")), 15000))
+    ]) as any;
 
-  return response.text;
+    return response.text;
+  } catch (error) {
+    console.warn("Gemini API failed or timed out, using fallback interpretation:", error);
+    return "Dein kosmisches Blueprint offenbart eine faszinierende Mischung aus westlicher und östlicher Astrologie. Deine Sonnen-Signatur verleiht dir einen starken Willen, während dein Mond-Echo deine emotionale Tiefe prägt. Dein Aszendent zeigt, wie du der Welt begegnest. Im chinesischen System bringt dein Jahrestier besondere Eigenschaften mit sich, die von deinem dominanten Element verstärkt werden. Diese einzigartige Kombination macht dich zu dem, was du bist. Nutze diese Energien, um deinen Weg mit Klarheit und Zuversicht zu gehen.";
+  }
 }

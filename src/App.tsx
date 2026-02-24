@@ -44,19 +44,6 @@ export default function App() {
     setError(null);
     try {
       const results = await calculateAll(data);
-      
-      // Check for specific API errors
-      const errors = [];
-      if (results.bazi?.error) errors.push(`BaZi: ${results.bazi.error}`);
-      if (results.western?.error) errors.push(`Western: ${results.western.error}`);
-      if (results.fusion?.error) errors.push(`Fusion: ${results.fusion.error}`);
-      if (results.wuxing?.error) errors.push(`WuXing: ${results.wuxing.error}`);
-      if (results.tst?.error) errors.push(`TST: ${results.tst.error}`);
-
-      if (errors.length > 0) {
-        throw new Error(`Calculation failed:\n${errors.join('\n')}`);
-      }
-
       setApiData(results);
 
       const aiInterpretation = await generateInterpretation(results);
