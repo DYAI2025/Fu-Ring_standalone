@@ -12,9 +12,17 @@
 3. Start development:
    `npm run dev`
 
+## Runtime Requirements
+
+- Node.js **20.19.x** (or **22.12+**) (defined in `package.json` `engines` and `.nvmrc`)
+- npm 10+
+
+This project intentionally avoids native Node build dependencies during install, so CI/deploy installs remain deterministic without `node-gyp` toolchain requirements.
+
 ## Railway Deployment
 
 This repo is prepared for Railway with:
+- `nixpacks.toml` to pin Nixpacks runtime to Node 20 and avoid engine drift
 - `railway.json` build/deploy commands
 - production server (`server.mjs`) to serve `dist/`
 - startup command `npm run start`
