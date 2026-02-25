@@ -14,7 +14,7 @@
 
 ## Runtime Requirements
 
-- Node.js **20.19.x** (or **22.12+**) (defined in `package.json` `engines` and `.nvmrc`)
+- Node.js **20.19+** (defined in `package.json` `engines` and `.nvmrc`)
 - npm 10+
 
 This project intentionally avoids native Node build dependencies during install, so CI/deploy installs remain deterministic without `node-gyp` toolchain requirements.
