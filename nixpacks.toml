@@ -1,4 +1,7 @@
 [phases.setup]
+# NOTE: `nodejs_20` uses the latest Node.js 20.x from nixpkgs and may not
+# match the exact 20.19.0 pinned in .nvmrc/package.json; any Node 20.x is
+# acceptable for this deployment environment.
 nixPkgs = ["nodejs_20", "npm-10_x"]
 
 [phases.install]
