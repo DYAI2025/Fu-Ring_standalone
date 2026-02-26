@@ -1,6 +1,8 @@
 import express from "express";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { createClient } from "@supabase/supabase-js";
+import crypto from "node:crypto";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -183,6 +185,74 @@ app.get("/api/debug-bafe", async (_req, res) => {
     bafe_internal_url: BAFE_INTERNAL_URL,
     bafe_active: BAFE_BASE_URL,
     probes: results,
+  });
+});
+
+// ── Supabase server-side client (Service Role Key bypasses RLS) ──────
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "";
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+const ELEVENLABS_TOOL_SECRET = process.env.ELEVENLABS_TOOL_SECRET || "";
+
+const supabaseAdmin = SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY
+  ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    })
+  : null;
+
+// ── GET /api/profile/:userId — ElevenLabs Custom Tool endpoint ──────
+app.get("/api/profile/:userId", async (req, res) => {
+  // Auth: require Bearer token (ElevenLabs tool secret or session token)
+  const authHeader = req.headers.authorization || "";
+  const token = authHeader.replace("Bearer ", "");
+
+  if (!token || token !== ELEVENLABS_TOOL_SECRET) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  if (!supabaseAdmin) {
+    return res.status(503).json({ error: "Supabase not configured on server" });
+  }
+
+  const { userId } = req.params;
+  const { data, error } = await supabaseAdmin
+    .from("astro_profiles")
+    .select("user_id, birth_date, birth_time, iana_time_zone, birth_lat, birth_lng, birth_place_name, sun_sign, moon_sign, asc_sign, astro_json, astro_computed_at")
+    .eq("user_id", userId)
+    .single();
+
+  if (error || !data) {
+    return res.status(404).json({ error: "Profile not found" });
+  }
+
+  res.json({
+    user_id: data.user_id,
+    sun_sign: data.sun_sign,
+    moon_sign: data.moon_sign,
+    asc_sign: data.asc_sign,
+    birth_date: data.birth_date,
+    birth_time: data.birth_time,
+    timezone: data.iana_time_zone,
+    astro_json: data.astro_json,
+    computed_at: data.astro_computed_at,
+  });
+});
+
+// ── POST /api/agent/session — Create session token for ElevenLabs ───
+app.post("/api/agent/session", express.json(), async (req, res) => {
+  const { user_id, chart_context } = req.body;
+
+  if (!user_id) {
+    return res.status(400).json({ error: "user_id required" });
+  }
+
+  // Generate a simple session token (in production, use JWT)
+  const sessionToken = crypto.randomBytes(32).toString("hex");
+
+  res.json({
+    session_token: sessionToken,
+    user_id,
+    chart_context: chart_context || "",
+    expires_in: 3600,
   });
 });
 

@@ -11,6 +11,7 @@ interface DashboardProps {
   isLoading: boolean;
   apiIssues: { endpoint: string; message: string }[];
   onStopAudio: () => void;
+  userId?: string;
 }
 
 export function Dashboard({
@@ -21,6 +22,7 @@ export function Dashboard({
   isLoading,
   apiIssues,
   onStopAudio,
+  userId,
 }: DashboardProps) {
   const [leviActive, setLeviActive] = useState(false);
   const leviSectionRef = useRef<HTMLDivElement>(null);
@@ -355,8 +357,8 @@ export function Dashboard({
                   <elevenlabs-convai
                     agent-id={elevenLabsAgentId}
                     dynamic-variables={JSON.stringify({
-                      chart_data: JSON.stringify(apiData),
-                      reading_id: apiData._reading_id || "",
+                      user_id: userId || "",
+                      chart_context: `${sunSign} / ${zodiacSign} / ${dominantElement}`,
                     })}
                   >
                   {/* @ts-ignore */}

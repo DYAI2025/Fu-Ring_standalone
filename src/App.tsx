@@ -3,12 +3,20 @@ import { motion, AnimatePresence } from "motion/react";
 import { BirthForm } from "./components/BirthForm";
 import { Dashboard } from "./components/Dashboard";
 import { Splash } from "./components/Splash";
+import { AuthGate } from "./components/AuthGate";
 import { calculateAll, BirthData, ApiIssue } from "./services/api";
 import { generateInterpretation } from "./services/gemini";
-import { persistReading } from "./services/supabase";
-import { Volume2, VolumeX, User, LayoutGrid } from "lucide-react";
+import {
+  upsertAstroProfile,
+  insertBirthData,
+  insertNatalChart,
+} from "./services/supabase";
+import { useAuth } from "./contexts/AuthContext";
+import { Volume2, VolumeX, User, LayoutGrid, LogOut } from "lucide-react";
 
 export default function App() {
+  const { user, loading: authLoading, signOut } = useAuth();
+
   const [showSplash, setShowSplash] = useState(true);
   const [siteVisible, setSiteVisible] = useState(false);
   const [audioPlaying, setAudioPlaying] = useState(false);
@@ -17,22 +25,27 @@ export default function App() {
   const [apiIssues, setApiIssues] = useState<ApiIssue[]>([]);
   const [interpretation, setInterpretation] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [lastBirthInput, setLastBirthInput] = useState<BirthData | null>(null);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    audioRef.current = document.getElementById('cosmic-audio') as HTMLAudioElement;
+    audioRef.current = document.getElementById(
+      "cosmic-audio",
+    ) as HTMLAudioElement;
   }, []);
 
   const handleEnter = () => {
-    // Start fade-out of splash
     setShowSplash(false);
-    // After splash exit animation, reveal site
     setTimeout(() => {
       setSiteVisible(true);
     }, 100);
     if (audioRef.current) {
-      audioRef.current.play().catch(e => console.warn("Audio autoplay blocked by browser policy. Interaction required."));
+      audioRef.current
+        .play()
+        .catch((e) =>
+          console.warn("Audio autoplay blocked by browser policy.", e),
+        );
       setAudioPlaying(true);
     }
   };
@@ -51,6 +64,7 @@ export default function App() {
   const handleSubmit = async (data: BirthData) => {
     setIsLoading(true);
     setError(null);
+    setLastBirthInput(data);
     try {
       const results = await calculateAll(data);
       setApiData(results);
@@ -59,24 +73,21 @@ export default function App() {
       const aiInterpretation = await generateInterpretation(results);
       setInterpretation(aiInterpretation);
 
-      const readingId = await persistReading({
-        birth_input: data,
-        api_data: results,
-        interpretation: aiInterpretation,
-        api_issues: results.issues,
-      }).catch((persistError) => {
-        console.warn("Supabase persist failed:", persistError);
-        return null;
-      });
-
-      if (readingId) {
-        results._reading_id = readingId;
-        setApiData({ ...results });
+      // Persist to Supabase under user's profile
+      if (user) {
+        Promise.all([
+          insertBirthData(user.id, data),
+          upsertAstroProfile(user.id, data, results, aiInterpretation),
+          insertNatalChart(user.id, results),
+        ]).catch((persistError) => {
+          console.warn("Supabase persist failed (non-blocking):", persistError);
+        });
       }
     } catch (err: any) {
       console.error("API Error:", err);
       setError(
-        err.message || "An error occurred while calculating your chart. Please check your inputs and try again."
+        err.message ||
+          "An error occurred while calculating your chart. Please check your inputs and try again.",
       );
     } finally {
       setIsLoading(false);
@@ -90,10 +101,21 @@ export default function App() {
     try {
       const aiInterpretation = await generateInterpretation(apiData);
       setInterpretation(aiInterpretation);
+
+      // Update stored profile with new interpretation
+      if (user && lastBirthInput) {
+        upsertAstroProfile(
+          user.id,
+          lastBirthInput,
+          apiData,
+          aiInterpretation,
+        ).catch((e) => console.warn("Profile update failed:", e));
+      }
     } catch (err: any) {
       console.error("AI Generation Error:", err);
       setError(
-        err.message || "An error occurred while regenerating your interpretation. Please try again later."
+        err.message ||
+          "An error occurred while regenerating your interpretation.",
       );
     } finally {
       setIsLoading(false);
@@ -105,7 +127,17 @@ export default function App() {
     setInterpretation(null);
     setError(null);
     setApiIssues([]);
+    setLastBirthInput(null);
   };
+
+  const handleSignOut = async () => {
+    handleReset();
+    await signOut();
+  };
+
+  // Determine what to show
+  const isLoggedIn = !!user;
+  const hasDashboard = apiData && interpretation;
 
   return (
     <>
@@ -124,7 +156,7 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* Main Site (always mounted, fades in after splash) */}
+      {/* Main Site */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: siteVisible ? 1 : 0 }}
@@ -133,55 +165,116 @@ export default function App() {
       >
         {/* Top Nav (Desktop) */}
         <header className="hidden md:flex fixed top-0 w-full h-20 items-center justify-between px-12 z-50 bg-obsidian/40 backdrop-blur-xl border-b border-gold/5">
-          <div className="font-serif text-xl tracking-widest text-gold cursor-pointer" onClick={handleReset}>Bazodiac</div>
+          <div
+            className="font-serif text-xl tracking-widest text-gold cursor-pointer"
+            onClick={handleReset}
+          >
+            Bazodiac
+          </div>
           <nav className="flex space-x-12 text-[10px] uppercase tracking-[0.3em]">
-            <a href="#" className="nav-link hover:text-gold transition-colors active">Atlas</a>
+            <a
+              href="#"
+              className="nav-link hover:text-gold transition-colors active"
+            >
+              Atlas
+            </a>
           </nav>
           <div className="flex items-center gap-6">
-            <button onClick={toggleAudio} className="hover:text-gold transition-colors opacity-60 hover:opacity-100">
-              {audioPlaying ? <Volume2 className="w-4 h-4 text-gold" /> : <VolumeX className="w-4 h-4 text-white/40" />}
+            <button
+              onClick={toggleAudio}
+              className="hover:text-gold transition-colors opacity-60 hover:opacity-100"
+            >
+              {audioPlaying ? (
+                <Volume2 className="w-4 h-4 text-gold" />
+              ) : (
+                <VolumeX className="w-4 h-4 text-white/40" />
+              )}
             </button>
             <div className="w-[1px] h-4 bg-gold/20"></div>
-            <button className="w-8 h-8 rounded-full border border-gold/20 flex items-center justify-center hover:bg-gold/10 hover:border-gold/40 transition-all">
-              <User className="w-3 h-3 text-gold/80" />
-            </button>
+            {isLoggedIn ? (
+              <div className="flex items-center gap-3">
+                <span className="text-[9px] text-gold/60 uppercase tracking-widest max-w-[120px] truncate">
+                  {user?.email}
+                </span>
+                <button
+                  onClick={handleSignOut}
+                  className="w-8 h-8 rounded-full border border-gold/20 flex items-center justify-center hover:bg-red-500/10 hover:border-red-500/40 transition-all"
+                  title="Abmelden"
+                >
+                  <LogOut className="w-3 h-3 text-white/60" />
+                </button>
+              </div>
+            ) : (
+              <button className="w-8 h-8 rounded-full border border-gold/20 flex items-center justify-center hover:bg-gold/10 hover:border-gold/40 transition-all">
+                <User className="w-3 h-3 text-gold/80" />
+              </button>
+            )}
           </div>
         </header>
 
         {/* Main Viewport */}
         <main className="flex-grow pt-24 md:pt-32 pb-24 md:pb-20 relative z-10 container mx-auto px-4 flex flex-col items-center justify-center">
-          {error && (
-            <div className="w-full max-w-md mb-8 bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-xl text-sm text-center">
-              {error}
-            </div>
+          {/* Auth loading spinner */}
+          {authLoading && (
+            <div className="text-gold/60 text-sm animate-pulse">Laden...</div>
           )}
 
-          {!apiData || !interpretation ? (
-            <BirthForm onSubmit={handleSubmit} isLoading={isLoading} />
-          ) : (
-            <Dashboard
-              interpretation={interpretation}
-              apiData={apiData}
-              onReset={handleReset}
-              onRegenerate={handleRegenerate}
-              isLoading={isLoading}
-              apiIssues={apiIssues}
-              onStopAudio={() => {
-                if (audioRef.current && audioPlaying) {
-                  audioRef.current.pause();
-                  setAudioPlaying(false);
-                }
-              }}
-            />
+          {/* Not logged in → AuthGate */}
+          {!authLoading && !isLoggedIn && <AuthGate />}
+
+          {/* Logged in → BirthForm or Dashboard */}
+          {!authLoading && isLoggedIn && (
+            <>
+              {error && (
+                <div className="w-full max-w-md mb-8 bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-xl text-sm text-center">
+                  {error}
+                </div>
+              )}
+
+              {!hasDashboard ? (
+                <BirthForm onSubmit={handleSubmit} isLoading={isLoading} />
+              ) : (
+                <Dashboard
+                  interpretation={interpretation}
+                  apiData={apiData}
+                  onReset={handleReset}
+                  onRegenerate={handleRegenerate}
+                  isLoading={isLoading}
+                  apiIssues={apiIssues}
+                  userId={user!.id}
+                  onStopAudio={() => {
+                    if (audioRef.current && audioPlaying) {
+                      audioRef.current.pause();
+                      setAudioPlaying(false);
+                    }
+                  }}
+                />
+              )}
+            </>
           )}
         </main>
 
         {/* Bottom Nav (Mobile) */}
         <nav className="md:hidden fixed bottom-0 w-full h-20 bg-obsidian/80 backdrop-blur-2xl border-t border-gold/10 flex items-center justify-around z-50">
-          <a href="#" className="nav-link flex flex-col items-center gap-1 text-gold" onClick={handleReset}>
+          <a
+            href="#"
+            className="nav-link flex flex-col items-center gap-1 text-gold"
+            onClick={handleReset}
+          >
             <LayoutGrid className="w-5 h-5" />
             <span className="text-[8px] uppercase tracking-tighter">Atlas</span>
           </a>
+          {isLoggedIn && (
+            <button
+              onClick={handleSignOut}
+              className="flex flex-col items-center gap-1 text-white/40"
+            >
+              <LogOut className="w-5 h-5" />
+              <span className="text-[8px] uppercase tracking-tighter">
+                Logout
+              </span>
+            </button>
+          )}
         </nav>
       </motion.div>
     </>
