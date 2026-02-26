@@ -7,10 +7,14 @@
     "method": "GET",
     "path_params_schema": [
       {
-        "name": "user_id",
+        "id": "user_id",
         "type": "string",
-        "description": "The Supabase auth UUID of the user whose astrology profile to retrieve. This is passed as a dynamic variable from the frontend widget.",
-        "required": true
+        "description": "The Supabase auth UUID of the user whose astrology profile to retrieve",
+        "dynamic_variable": "user_id",
+        "constant_value": "",
+        "is_system_provided": false,
+        "required": true,
+        "value_type": "dynamic_variable"
       }
     ],
     "query_params_schema": [],
