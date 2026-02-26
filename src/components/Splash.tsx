@@ -127,7 +127,7 @@ export function Splash({ onEnter }: SplashProps) {
         <video
           ref={videoRef}
           className={`absolute inset-0 w-full h-full object-cover z-30 transition-opacity duration-[3000ms] ease-in-out ${
-            phase === "video" && !videoFading ? "opacity-100" : "opacity-0"
+            phase === "video" && !videoFading ? "opacity-100" : "opacity-0 pointer-events-none"
           } ${phase === "gate" ? "pointer-events-none" : ""}`}
           playsInline
           preload="auto"
