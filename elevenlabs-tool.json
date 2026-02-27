@@ -1,7 +1,7 @@
 {
   "type": "webhook",
   "name": "get_user_astro_profile",
-  "description": "Retrieves the user's complete astrology profile including sun sign, moon sign, ascendant sign, birth data, and full chart calculation. Call this tool at the start of every conversation to personalize your astrological advice based on the user's natal chart.",
+  "description": "Retrieves the user's complete astrology profile including their name, sun sign, moon sign, ascendant sign, birth data, full chart calculation, and summaries of all past conversations. Call this tool IMMEDIATELY at the start of every conversation to personalize your astrological advice. Use the past_conversations field to continue where you left off.",
   "api_schema": {
     "url": "https://astro-noctum-production.up.railway.app/api/profile/{user_id}",
     "method": "GET",
@@ -22,10 +22,77 @@
     "request_headers": [
       {
         "key": "Authorization",
-        "value": "Bearer wsec_6799ace1ef60109af06c4f51592a371b2a1fa96ed4e8bea794f5a7cd0e8aa1af"
+        "value": "Bearer {{ELEVENLABS_TOOL_SECRET}}"
       }
     ],
     "auth_connection": null
+  },
+  "response_schema": {
+    "type": "object",
+    "properties": {
+      "user_id": {
+        "type": "string",
+        "description": "Supabase user UUID"
+      },
+      "display_name": {
+        "type": "string",
+        "description": "User's display name or email prefix — use this to address them by name"
+      },
+      "sun_sign": {
+        "type": "string",
+        "description": "Western zodiac sun sign (e.g. Aquarius, Leo)"
+      },
+      "moon_sign": {
+        "type": "string",
+        "description": "Moon sign"
+      },
+      "asc_sign": {
+        "type": "string",
+        "description": "Ascendant/rising sign"
+      },
+      "birth_date": {
+        "type": "string",
+        "description": "Birth date in YYYY-MM-DD format"
+      },
+      "birth_time": {
+        "type": "string",
+        "description": "Birth time in HH:MM format"
+      },
+      "timezone": {
+        "type": "string",
+        "description": "IANA timezone (e.g. Europe/Berlin)"
+      },
+      "astro_json": {
+        "type": "object",
+        "description": "Full chart data with bazi, western, fusion, wuxing, tst calculations and AI interpretation"
+      },
+      "computed_at": {
+        "type": "string",
+        "description": "ISO timestamp of when the chart was computed"
+      },
+      "past_conversations": {
+        "type": "array",
+        "description": "Summaries of past conversations with this user, newest first. Use these to remember what was discussed before and continue the astrological journey.",
+        "items": {
+          "type": "object",
+          "properties": {
+            "summary": {
+              "type": "string",
+              "description": "Brief summary of what was discussed"
+            },
+            "topics": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Key topics covered"
+            },
+            "created_at": {
+              "type": "string",
+              "description": "When the conversation happened"
+            }
+          }
+        }
+      }
+    }
   },
   "response_timeout_secs": 10,
   "dynamic_variables": {

@@ -73,6 +73,17 @@ CREATE TABLE IF NOT EXISTS natal_charts (
 
 CREATE INDEX IF NOT EXISTS idx_natal_charts_user ON natal_charts(user_id);
 
+-- ── 5. agent_conversations (Levi session memory) ─────────────
+CREATE TABLE IF NOT EXISTS agent_conversations (
+  id BIGSERIAL PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  summary TEXT NOT NULL,
+  topics TEXT[] DEFAULT '{}',
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_agent_conversations_user ON agent_conversations(user_id);
+
 -- ============================================================
 -- RLS Policies
 -- ============================================================
@@ -115,4 +126,11 @@ ALTER TABLE natal_charts ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Users manage own charts" ON natal_charts;
 CREATE POLICY "Users manage own charts" ON natal_charts
+  FOR ALL USING (auth.uid() = user_id);
+
+-- ── agent_conversations ───────────────────────────────────
+ALTER TABLE agent_conversations ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users manage own conversations" ON agent_conversations;
+CREATE POLICY "Users manage own conversations" ON agent_conversations
   FOR ALL USING (auth.uid() = user_id);
