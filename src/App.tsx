@@ -160,7 +160,7 @@ export default function App() {
 
   // Determine what to show
   const isLoggedIn = !!user;
-  const hasDashboard = !!apiData && (!isLoading || !!interpretation);
+  const hasDashboard = !!apiData;
 
   return (
     <>
