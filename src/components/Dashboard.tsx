@@ -1,34 +1,28 @@
-import { useEffect, useRef, useState, useMemo } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Sun, Moon, Zap, ArrowLeft, RefreshCw, ArrowUp, Phone, PhoneOff } from "lucide-react";
 import ReactMarkdown from "react-markdown";
-import { BirthChartOrrery } from "./BirthChartOrrery";
-import type { BirthData } from "../services/api";
 
 interface DashboardProps {
   interpretation: string;
   apiData: any;
+  userId: string;
   onReset: () => void;
   onRegenerate: () => void;
   isLoading: boolean;
   apiIssues: { endpoint: string; message: string }[];
   onStopAudio: () => void;
-  onResumeAudio: () => void;
-  userId?: string;
-  birthInput?: BirthData | null;
 }
 
 export function Dashboard({
   interpretation,
   apiData,
+  userId,
   onReset,
   onRegenerate,
   isLoading,
   apiIssues,
   onStopAudio,
-  onResumeAudio,
-  userId,
-  birthInput,
 }: DashboardProps) {
   const [leviActive, setLeviActive] = useState(false);
   const leviSectionRef = useRef<HTMLDivElement>(null);
@@ -58,7 +52,6 @@ export function Dashboard({
 
   const handleHangUp = () => {
     setLeviActive(false);
-    onResumeAudio();
   };
 
   const zodiacEmojis: Record<string, string> = {
@@ -117,16 +110,8 @@ export function Dashboard({
   };
 
   const dominantElement = apiData.wuxing?.dominant_element || "—";
-  const elevenLabsAgentId = import.meta.env.VITE_ELEVENLABS_AGENT_ID || "agent_1801kje0zqc8e4b89swbt7wekawv";
+  const elevenLabsAgentId = import.meta.env.VITE_ELEVENLABS_AGENT_ID || "agent_9001kdhah7vrfh3rd05pakg8vppk";
   const elementTrait = wuXingTraits[dominantElement] || "Deine elementare Natur formt deine Herangehensweise an das Leben.";
-
-  // Parse birth date for the 3D orrery
-  const birthDateObj = useMemo(() => {
-    if (birthInput?.date) {
-      return new Date(birthInput.date);
-    }
-    return new Date();
-  }, [birthInput]);
 
   return (
     <motion.div
@@ -172,11 +157,6 @@ export function Dashboard({
           </button>
         </div>
       </header>
-
-      {/* 3D Solar System — Birth Chart Orrery */}
-      <div className="mb-20">
-        <BirthChartOrrery birthDate={birthDateObj} height="420px" />
-      </div>
 
       {/* Western Astrology Section */}
       <div className="mb-20">
@@ -377,7 +357,7 @@ export function Dashboard({
                   <elevenlabs-convai
                     agent-id={elevenLabsAgentId}
                     dynamic-variables={JSON.stringify({
-                      user_id: userId || "",
+                      user_id: userId,
                       chart_context: `${sunSign} / ${zodiacSign} / ${dominantElement}`,
                     })}
                   >
