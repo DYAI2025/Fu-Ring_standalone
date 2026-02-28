@@ -1,52 +1,50 @@
 {
-  "tool_config": {
-    "type": "webhook",
-    "name": "save_conversation_summary",
-    "description": "Saves a summary of the current conversation so you can remember it next time. Call this BEFORE ending every conversation with a 2-3 sentence summary of key topics and insights.",
-    "api_schema": {
-      "url": "https://astro-noctum-production.up.railway.app/api/agent/conversation",
-      "method": "POST",
-      "content_type": "application/json",
-      "path_params_schema": {},
-      "query_params_schema": {},
-      "request_body_schema": {
-        "type": "object",
-        "required": ["user_id", "summary"],
-        "properties": {
-          "user_id": {
-            "type": "string",
-            "description": "Supabase auth UUID of the user"
-          },
-          "summary": {
-            "type": "string",
-            "description": "Concise 2-3 sentence summary of this conversation"
-          },
-          "topics": {
-            "type": "array",
-            "items": { "type": "string" },
-            "description": "Key topic tags like sun-sign, career, relationships, bazi-pillars"
-          }
-        }
-      },
-      "request_headers": {
-        "Authorization": {
-          "secret_id": "ELEVENLABS_TOOL_SECRET"
+  "type": "webhook",
+  "name": "save_conversation_summary",
+  "description": "Saves a summary of the current conversation so you can remember it next time. Call this BEFORE ending every conversation with a 2-3 sentence summary of key topics and insights.",
+  "api_schema": {
+    "url": "https://astro-noctum-production.up.railway.app/api/agent/conversation",
+    "method": "POST",
+    "content_type": "application/json",
+    "path_params_schema": {},
+    "query_params_schema": {},
+    "request_body_schema": {
+      "type": "object",
+      "required": ["user_id", "summary"],
+      "properties": {
+        "user_id": {
+          "type": "string",
+          "description": "Supabase auth UUID of the user"
         },
-        "Content-Type": "application/json"
+        "summary": {
+          "type": "string",
+          "description": "Concise 2-3 sentence summary of this conversation"
+        },
+        "topics": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Key topic tags like sun-sign, career, relationships, bazi-pillars"
+        }
       }
     },
-    "response_timeout_secs": 10,
-    "dynamic_variables": {
-      "dynamic_variable_placeholders": {
-        "user_id": "user_id"
-      }
-    },
-    "assignments": [],
-    "disable_interruptions": false,
-    "force_pre_tool_speech": "auto",
-    "tool_call_sound": null,
-    "tool_call_sound_behavior": "auto",
-    "execution_mode": "immediate",
-    "tool_error_handling_mode": "auto"
-  }
+    "request_headers": {
+      "Authorization": {
+        "secret_id": "ELEVENLABS_TOOL_SECRET"
+      },
+      "Content-Type": "application/json"
+    }
+  },
+  "response_timeout_secs": 10,
+  "dynamic_variables": {
+    "dynamic_variable_placeholders": {
+      "user_id": "user_id"
+    }
+  },
+  "assignments": [],
+  "disable_interruptions": false,
+  "force_pre_tool_speech": "auto",
+  "tool_call_sound": null,
+  "tool_call_sound_behavior": "auto",
+  "execution_mode": "immediate",
+  "tool_error_handling_mode": "auto"
 }

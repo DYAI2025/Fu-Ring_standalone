@@ -1,37 +1,35 @@
 {
-  "tool_config": {
-    "type": "webhook",
-    "name": "get_user_astro_profile",
-    "description": "Retrieves the user astrology profile including name, signs, birth data, chart calculations, and past conversation summaries. Call this IMMEDIATELY at conversation start to personalize advice.",
-    "api_schema": {
-      "url": "https://astro-noctum-production.up.railway.app/api/profile/{user_id}",
-      "method": "GET",
-      "path_params_schema": {
-        "user_id": {
-          "type": "string",
-          "description": "Supabase auth UUID of the user"
-        }
-      },
-      "query_params_schema": {},
-      "request_body_schema": null,
-      "request_headers": {
-        "Authorization": {
-          "secret_id": "ELEVENLABS_TOOL_SECRET"
-        }
+  "type": "webhook",
+  "name": "get_user_astro_profile",
+  "description": "Retrieves the user astrology profile including name, signs, birth data, chart calculations, and past conversation summaries. Call this IMMEDIATELY at conversation start to personalize advice.",
+  "api_schema": {
+    "url": "https://astro-noctum-production.up.railway.app/api/profile/{user_id}",
+    "method": "GET",
+    "path_params_schema": {
+      "user_id": {
+        "type": "string",
+        "description": "Supabase auth UUID of the user"
       }
     },
-    "response_timeout_secs": 10,
-    "dynamic_variables": {
-      "dynamic_variable_placeholders": {
-        "user_id": "user_id"
+    "query_params_schema": {},
+    "request_body_schema": null,
+    "request_headers": {
+      "Authorization": {
+        "secret_id": "ELEVENLABS_TOOL_SECRET"
       }
-    },
-    "assignments": [],
-    "disable_interruptions": true,
-    "force_pre_tool_speech": "auto",
-    "tool_call_sound": null,
-    "tool_call_sound_behavior": "auto",
-    "execution_mode": "immediate",
-    "tool_error_handling_mode": "auto"
-  }
+    }
+  },
+  "response_timeout_secs": 10,
+  "dynamic_variables": {
+    "dynamic_variable_placeholders": {
+      "user_id": "user_id"
+    }
+  },
+  "assignments": [],
+  "disable_interruptions": true,
+  "force_pre_tool_speech": "auto",
+  "tool_call_sound": null,
+  "tool_call_sound_behavior": "auto",
+  "execution_mode": "immediate",
+  "tool_error_handling_mode": "auto"
 }
