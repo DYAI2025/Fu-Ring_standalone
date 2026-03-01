@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { BirthForm } from "./components/BirthForm";
 import { Dashboard } from "./components/Dashboard";
@@ -11,6 +11,7 @@ import {
   upsertAstroProfile,
   insertBirthData,
   insertNatalChart,
+  fetchAstroProfile,
 } from "./services/supabase";
 import { useAmbientePlayer } from "./hooks/useAmbientePlayer";
 import { Volume2, VolumeX, LogOut, LayoutGrid } from "lucide-react";
@@ -21,12 +22,44 @@ export default function App() {
   const [showSplash, setShowSplash] = useState(true);
   const [siteVisible, setSiteVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(false);
   const [apiData, setApiData] = useState<any>(null);
   const [apiIssues, setApiIssues] = useState<ApiIssue[]>([]);
   const [interpretation, setInterpretation] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [hasPersistedProfile, setHasPersistedProfile] = useState(false);
+
+  // Track which user we already fetched the profile for (prevents re-fetch loops)
+  const profileFetchedForRef = useRef<string | null>(null);
 
   const ambiente = useAmbientePlayer();
+
+  // ── T-001: Load existing astro profile on login ──────────────────────
+  useEffect(() => {
+    if (!user || apiData) return;
+    if (profileFetchedForRef.current === user.id) return;
+    profileFetchedForRef.current = user.id;
+
+    setProfileLoading(true);
+    fetchAstroProfile(user.id)
+      .then((profile) => {
+        if (profile?.astro_json) {
+          const json = profile.astro_json as any;
+          setApiData({
+            bazi: json.bafe?.bazi ?? json.bazi,
+            western: json.bafe?.western ?? json.western,
+            fusion: json.bafe?.fusion ?? json.fusion,
+            wuxing: json.bafe?.wuxing ?? json.wuxing,
+            tst: json.bafe?.tst ?? json.tst,
+            issues: [],
+          });
+          setInterpretation(json.bafe?.interpretation ?? json.interpretation ?? null);
+          setHasPersistedProfile(true);
+        }
+      })
+      .catch((err) => console.warn("Profile load failed:", err))
+      .finally(() => setProfileLoading(false));
+  }, [user, apiData]);
 
   const handleEnter = () => {
     setShowSplash(false);
@@ -88,7 +121,9 @@ export default function App() {
     }
   };
 
+  // ── T-002: Block reset when user has a persisted astro profile ─────
   const handleReset = () => {
+    if (hasPersistedProfile) return;
     setApiData(null);
     setInterpretation(null);
     setError(null);
@@ -112,8 +147,8 @@ export default function App() {
     );
   }
 
-  // Auth loading
-  if (authLoading) {
+  // Auth loading or profile loading
+  if (authLoading || profileLoading) {
     return (
       <div className="min-h-screen bg-obsidian flex items-center justify-center">
         <div className="w-1 h-1 bg-gold rounded-full animate-ping" />
