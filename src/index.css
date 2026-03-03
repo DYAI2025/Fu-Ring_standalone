@@ -163,16 +163,16 @@ body {
   border-bottom: 1px solid rgba(165,195,225,0.30);
 }
 
-/* WuXing element bar track */
+/* WuXing element bar track (used in compact bar chart, Dashboard) */
 .wuxing-bar-track {
-  height: 4px;
-  border-radius: 2px;
-  background: rgba(165,195,225,0.25);
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(165,195,225,0.20);
   overflow: hidden;
 }
 .wuxing-bar-fill {
   height: 100%;
-  border-radius: 2px;
+  border-radius: 3px;
   transition: width 1.2s cubic-bezier(0.16,1,0.3,1);
 }
 
