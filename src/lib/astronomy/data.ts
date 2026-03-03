@@ -168,6 +168,11 @@ export const CONSTELLATION_LINES: ConstellationLines = {
   Virgo: [["Spica","Porrima"],["Porrima","Vindemiatrix"]],
   Aries: [["Hamal","Sheratan"]],
   Libra: [["Zubeneschamali","Zubenelgenubi"]],
+  // Zodiac constellations with sparse star data — basic connector lines
+  Cancer:      [["Acubens","Asellus Australis"]],
+  Capricornus: [["Deneb Algedi","Dabih"]],
+  Aquarius:    [["Sadalsuud","Sadalmelik"]],
+  // Pisces: only one star (Eta Piscium) in catalog — no line possible
 };
 
 // ── Constellation Names (German) ──

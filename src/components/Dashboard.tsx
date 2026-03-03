@@ -9,6 +9,9 @@ import { useLanguage } from "../contexts/LanguageContext";
 import { WUXING_ELEMENTS, getWuxingByKey } from "../lib/astro-data/wuxing";
 import { getBranchByAnimal } from "../lib/astro-data/earthlyBranches";
 import { getZodiacSign, getSignName } from "../lib/astro-data/zodiacSigns";
+import { getConstellationForSign } from "../lib/astro-data/constellationFromSign";
+import { usePlanetarium } from "../contexts/PlanetariumContext";
+import { Tooltip } from "./Tooltip";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Static data
@@ -86,61 +89,6 @@ function fadeIn(delay = 0) {
   };
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Tooltip component — accessible, hover + click (mobile), ARIA-compliant
-// ─────────────────────────────────────────────────────────────────────────────
-
-let _tooltipId = 0;
-
-function Tooltip({
-  content,
-  children,
-  wide = false,
-}: {
-  content: string;
-  children: React.ReactNode;
-  wide?: boolean;
-}) {
-  const [show, setShow] = useState(false);
-  const id = useMemo(() => `tt-${++_tooltipId}`, []);
-
-  return (
-    <div
-      className="relative"
-      onMouseEnter={() => setShow(true)}
-      onMouseLeave={() => setShow(false)}
-      onFocus={() => setShow(true)}
-      onBlur={() => setShow(false)}
-      onClick={() => setShow((v) => !v)}
-    >
-      <div aria-describedby={show ? id : undefined}>{children}</div>
-
-      <AnimatePresence>
-        {show && (
-          <motion.div
-            id={id}
-            role="tooltip"
-            initial={{ opacity: 0, y: 6, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 6, scale: 0.97 }}
-            transition={{ duration: 0.16, ease: "easeOut" }}
-            className={`
-              absolute bottom-[calc(100%+8px)] left-1/2 -translate-x-1/2
-              ${wide ? "w-64" : "w-52"}
-              bg-white/97 border border-[#8B6914]/20 rounded-xl
-              px-3.5 py-3 shadow-[0_8px_24px_-4px_rgba(0,30,80,0.13)]
-              z-50 pointer-events-none
-            `}
-          >
-            <p className="text-[11px] text-[#1E2A3A]/68 leading-relaxed">{content}</p>
-            {/* Arrow */}
-            <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-x-[5px] border-x-transparent border-t-[5px] border-t-white/97" />
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Section sub-components
@@ -214,6 +162,7 @@ export function Dashboard({
   onResumeAudio,
 }: DashboardProps) {
   const { lang, t } = useLanguage();
+  const { planetariumMode } = usePlanetarium();
   const [leviActive, setLeviActive] = useState(false);
   const leviSectionRef = useRef<HTMLDivElement>(null);
 
@@ -301,6 +250,12 @@ export function Dashboard({
     return isNaN(d.getTime()) ? new Date() : d;
   }, [birthDate]);
 
+  // Birth constellation for Planetarium Mode (FR-P04)
+  const birthConstellationKey = useMemo(
+    () => getConstellationForSign(sunSign)?.key,
+    [sunSign],
+  );
+
   const elevenLabsAgentId =
     import.meta.env.VITE_ELEVENLABS_AGENT_ID || "agent_1801kje0zqc8e4b89swbt7wekawv";
 
@@ -364,7 +319,12 @@ export function Dashboard({
 
       {/* ═══ 3D ORRERY ════════════════════════════════════════════════ */}
       <motion.div className="mb-14" {...fadeIn(0.1)}>
-        <BirthChartOrrery birthDate={orreryDate} height="460px" />
+        <BirthChartOrrery
+          birthDate={orreryDate}
+          height="460px"
+          planetariumMode={planetariumMode}
+          birthConstellation={birthConstellationKey}
+        />
       </motion.div>
 
       {/* ═══ PRIMARY GRID: Western (left) | BaZi/WuXing (right) ═══════ */}
@@ -381,8 +341,8 @@ export function Dashboard({
           {/* ── LEFT — Western Signs ─────────────────────────────── */}
           <div className="flex flex-col gap-5">
 
-            {/* Sun Sign — FR-03.1 */}
-            <div className="morning-card p-7 flex flex-col justify-between">
+            {/* Sun Sign — FR-03.1 / FR-P05: data-special for gold border in Planetarium */}
+            <div className="morning-card p-7 flex flex-col justify-between" data-special="true">
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <motion.div
@@ -498,8 +458,8 @@ export function Dashboard({
           {/* ── RIGHT — BaZi / WuXing ───────────────────────────── */}
           <div className="flex flex-col gap-5">
 
-            {/* Year Animal */}
-            <div className="morning-card p-7 flex flex-col justify-between">
+            {/* Year Animal — FR-P05: data-special for gold border in Planetarium */}
+            <div className="morning-card p-7 flex flex-col justify-between" data-special="true">
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <span className="text-2xl leading-none">{yearBranch?.emoji || "✨"}</span>
@@ -613,7 +573,7 @@ export function Dashboard({
               return (
                 // Wrapper is overflow-visible so tooltip escapes morning-stele's overflow:hidden
                 <div key={key} className="relative overflow-visible">
-                  <Tooltip content={pk ? t(pk.desc) : ""} wide>
+                  <Tooltip content={pk ? t(pk.desc) : ""} wide dark={planetariumMode}>
                     <div className="morning-stele group cursor-help w-full">
                       <div className="text-[8px] uppercase tracking-[0.3em] text-[#8B6914]/55 mb-5 group-hover:text-[#8B6914] transition-colors">
                         {pk ? t(pk.label) : key}
@@ -654,7 +614,7 @@ export function Dashboard({
               const isDom    = el.key === dominantEl || el.name.de === dominantEl;
 
               return (
-                <Tooltip key={el.key} content={el.description[lang]} wide>
+                <Tooltip key={el.key} content={el.description[lang]} wide dark={planetariumMode}>
                   <div className="flex items-center gap-4 cursor-help group">
                     {/* Identity */}
                     <div className="w-28 md:w-36 shrink-0 flex items-center gap-2.5">
