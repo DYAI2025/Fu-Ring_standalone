@@ -120,7 +120,7 @@ export function AuthGate() {
           <h2 className="font-serif text-2xl mb-2">
             {mode === "login"
               ? (lang === "de" ? "Willkommen zurück" : "Welcome back")
-              : t("auth.title")}
+              : t("auth.signUpTitle")}
           </h2>
           <p className="text-white/40 text-xs">
             {mode === "login"
