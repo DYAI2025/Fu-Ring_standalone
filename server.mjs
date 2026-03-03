@@ -221,6 +221,24 @@ app.get("/api/profile/:userId", async (req, res) => {
       )
     : null;
 
+  // Fetch past conversation summaries for session continuity
+  let pastConversations = [];
+  try {
+    const { data: convos, error: convosError } = await supabaseServer
+      .from("agent_conversations")
+      .select("summary, topics, created_at")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(5);
+    if (convosError) {
+      console.warn("[profile] conversation fetch failed:", convosError.message || convosError);
+    } else if (convos) {
+      pastConversations = convos;
+    }
+  } catch (convErr) {
+    console.warn("[profile] conversation fetch failed (thrown):", convErr.message);
+  }
+
   res.json({
     user_id: data.user_id,
     birth_date: data.birth_date,
@@ -247,7 +265,46 @@ app.get("/api/profile/:userId", async (req, res) => {
 
     // AI interpretation (the Gemini text the user already saw)
     interpretation: bafe.interpretation || raw.interpretation || null,
+
+    // Past conversation summaries for session continuity
+    past_conversations: pastConversations,
   });
+});
+
+// ── POST /api/agent/conversation — Save Levi conversation summary ───
+app.post("/api/agent/conversation", express.json(), async (req, res) => {
+  // Verify bearer token
+  const authHeader = req.headers.authorization || "";
+  const token = authHeader.replace("Bearer ", "").trim();
+
+  if (!ELEVENLABS_TOOL_SECRET || token !== ELEVENLABS_TOOL_SECRET) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  if (!supabaseServer) {
+    return res.status(500).json({ error: "Supabase not configured on server" });
+  }
+
+  const { user_id, summary, topics } = req.body;
+
+  if (!user_id || !summary) {
+    return res.status(400).json({ error: "user_id and summary are required" });
+  }
+
+  const { error } = await supabaseServer
+    .from("agent_conversations")
+    .insert({
+      user_id,
+      summary,
+      topics: topics || [],
+    });
+
+  if (error) {
+    console.error("[agent/conversation] Supabase error:", error);
+    return res.status(500).json({ error: error.message });
+  }
+
+  res.json({ status: "saved" });
 });
 
 // ── Static files ────────────────────────────────────────────────────

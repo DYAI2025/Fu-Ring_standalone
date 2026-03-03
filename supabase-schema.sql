@@ -87,3 +87,18 @@ CREATE TABLE IF NOT EXISTS natal_charts (
 ALTER TABLE natal_charts ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users manage own charts" ON natal_charts
   FOR ALL USING (auth.uid() = user_id);
+
+-- ── agent_conversations (Levi session summaries) ────────────────────
+CREATE TABLE IF NOT EXISTS agent_conversations (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  summary TEXT NOT NULL,
+  topics JSONB DEFAULT '[]'::jsonb,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE agent_conversations ENABLE ROW LEVEL SECURITY;
+-- Server uses service_role key, so no RLS policy needed for inserts.
+-- Users can read their own conversations (for potential future UI display).
+CREATE POLICY "Users read own conversations" ON agent_conversations
+  FOR SELECT USING (auth.uid() = user_id);
