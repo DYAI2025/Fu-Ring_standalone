@@ -105,3 +105,16 @@ CREATE TABLE IF NOT EXISTS agent_conversations (
 ALTER TABLE agent_conversations ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users read own conversations" ON agent_conversations
   FOR SELECT USING (auth.uid() = user_id);
+
+-- === Premium Tier ===
+ALTER TABLE profiles
+ADD COLUMN IF NOT EXISTS tier TEXT NOT NULL DEFAULT 'free'
+CHECK (tier IN ('free', 'premium'));
+
+ALTER TABLE profiles
+ADD COLUMN IF NOT EXISTS stripe_customer_id TEXT;
+
+ALTER TABLE profiles
+ADD COLUMN IF NOT EXISTS stripe_payment_id TEXT;
+
+CREATE INDEX IF NOT EXISTS idx_profiles_tier ON profiles(tier);

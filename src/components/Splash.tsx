@@ -175,7 +175,7 @@ export function Splash({ onEnter, onLanguageSelect }: SplashProps) {
             phase === "video" && !videoFading ? "opacity-100" : "opacity-0 pointer-events-none"
           } ${phase === "gate" ? "pointer-events-none" : ""}`}
           playsInline
-          preload="auto"
+          preload="none"
           onTimeUpdate={handleTimeUpdate}
           onEnded={handleVideoEnded}
           onError={handleVideoError}

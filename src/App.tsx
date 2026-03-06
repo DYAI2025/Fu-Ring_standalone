@@ -156,12 +156,10 @@ export default function App() {
       }
 
       setProfileState("found");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("API Error:", err);
-      setError(
-        err.message ||
-          "An error occurred while calculating your chart. Please check your inputs and try again.",
-      );
+      const msg = err instanceof Error ? err.message : "";
+      setError(msg || t("form.errorCalc"));
     } finally {
       setIsLoading(false);
     }
@@ -177,9 +175,10 @@ export default function App() {
     try {
       const aiInterpretation = await generateInterpretation(apiData, lang);
       setInterpretation(aiInterpretation);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("AI Generation Error:", err);
-      setError(err.message || "An error occurred while regenerating your interpretation.");
+      const msg = err instanceof Error ? err.message : "";
+      setError(msg || t("form.errorRegen"));
     } finally {
       setIsLoading(false);
     }
