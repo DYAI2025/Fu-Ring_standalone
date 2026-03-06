@@ -9,6 +9,7 @@ interface SplashProps {
 
 const CROSSFADE_DURATION = 3; // seconds before video end to start crossfade
 const SEEN_KEY = "bazodiac_intro_seen";
+const HERO_SEEN_KEY = "bazodiac_hero_seen";
 
 const VIDEOS: Record<string, string> = {
   de: "/bazodiac_male_intro_GER.mp4",
@@ -16,9 +17,14 @@ const VIDEOS: Record<string, string> = {
 };
 
 export function Splash({ onEnter, onLanguageSelect }: SplashProps) {
-  // Phases: "gate" → "video" → "animation" → "ready"
-  // "gate" = initial click to unlock audio context (browser policy)
-  const [phase, setPhase] = useState<"gate" | "video" | "animation">("gate");
+  // Phases: "hero" → "gate" → "video" → "animation"
+  // "hero"  = marketing/value prop scroll page
+  // "gate"  = language selection to unlock audio context
+  const [phase, setPhase] = useState<"hero" | "gate" | "video" | "animation">(() => {
+    try {
+      return localStorage.getItem(HERO_SEEN_KEY) === "true" ? "gate" : "hero";
+    } catch { return "hero"; }
+  });
   const [stage, setStage] = useState(0); // CSS animation stages (0-4)
   const [videoFading, setVideoFading] = useState(false);
   const [canSkip, setCanSkip] = useState(false);
@@ -183,6 +189,122 @@ export function Splash({ onEnter, onLanguageSelect }: SplashProps) {
           <source src={videoSrc} type="video/mp4" />
         </video>
       )}
+
+      {/* ── HERO: Marketing / Value Prop ── */}
+      <AnimatePresence>
+        {phase === "hero" && (
+          <motion.div
+            key="hero"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.8 }}
+            className="absolute inset-0 z-50 overflow-y-auto bg-obsidian"
+          >
+            <div className="min-h-screen flex flex-col">
+              {/* Hero Section */}
+              <section className="flex-1 flex flex-col items-center justify-center text-center px-6 py-20 min-h-screen">
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3, duration: 1.5 }}
+                  className="font-sans text-[10px] uppercase tracking-[0.6em] text-gold/50 mb-8"
+                >
+                  Bazodiac
+                </motion.p>
+                <motion.h1
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.6, duration: 1.5 }}
+                  className="font-serif text-3xl md:text-5xl text-white/90 max-w-3xl leading-tight mb-6"
+                >
+                  Dein kosmisches Profil — drei Systeme, ein Bild
+                </motion.h1>
+                <motion.p
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 1, duration: 1.5 }}
+                  className="font-sans text-sm md:text-base text-white/40 max-w-xl mb-12 leading-relaxed"
+                >
+                  Bazodiac fusioniert westliche Astrologie, chinesisches BaZi und Wu-Xing zu einem Reading, das nur wir erstellen können.
+                </motion.p>
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 1.5, duration: 1 }}
+                  className="text-white/15 text-xs animate-bounce"
+                >
+                  ↓
+                </motion.div>
+              </section>
+
+              {/* How It Works */}
+              <section className="px-6 py-16 max-w-4xl mx-auto w-full">
+                <h2 className="font-serif text-2xl text-white/80 text-center mb-12">So funktioniert es</h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  {[
+                    { step: "1", title: "Geburtsdaten eingeben", desc: "Datum, Uhrzeit und Ort — mehr brauchen wir nicht." },
+                    { step: "2", title: "Drei Systeme berechnen", desc: "Western, BaZi und Wu-Xing analysieren gleichzeitig deine kosmische Signatur." },
+                    { step: "3", title: "Fusion-Reading erhalten", desc: "Ein personalisiertes Reading, das Muster enthüllt, die kein System allein zeigen kann." },
+                  ].map((s) => (
+                    <div key={s.step} className="text-center">
+                      <div className="w-10 h-10 rounded-full border border-gold/20 flex items-center justify-center mx-auto mb-4 text-gold/60 text-sm font-sans">
+                        {s.step}
+                      </div>
+                      <h3 className="font-serif text-lg text-white/70 mb-2">{s.title}</h3>
+                      <p className="text-white/30 text-sm leading-relaxed">{s.desc}</p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              {/* Features */}
+              <section className="px-6 py-16 max-w-5xl mx-auto w-full">
+                <h2 className="font-serif text-2xl text-white/80 text-center mb-12">Sechs Dimensionen</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {[
+                    { icon: "☉", title: "Westliche Astrologie", desc: "Sonne, Mond, Aszendent — präzise berechnet." },
+                    { icon: "柱", title: "Chinesisches BaZi", desc: "Die Vier Säulen des Schicksals enthüllen verborgene Talente." },
+                    { icon: "五", title: "Wu-Xing Balance", desc: "Fünf Elemente zeigen, wo deine Energie fließt." },
+                    { icon: "✦", title: "KI-Interpretation", desc: "Personalisiert durch Gemini — verständlich verwoben." },
+                    { icon: "◎", title: "3D Planetarium", desc: "Interaktive Sternenkarte deiner Geburtsstellung." },
+                    { icon: "♪", title: "Levi Bazi", desc: "Dein persönlicher Astro-Berater mit Stimme." },
+                  ].map((f) => (
+                    <div key={f.title} className="border border-white/5 rounded-xl p-5 bg-white/[0.02]">
+                      <span className="text-2xl mb-3 block text-gold/50">{f.icon}</span>
+                      <h3 className="font-serif text-base text-white/70 mb-1">{f.title}</h3>
+                      <p className="text-white/30 text-sm">{f.desc}</p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              {/* USP */}
+              <section className="px-6 py-16 max-w-2xl mx-auto w-full text-center">
+                <h2 className="font-serif text-2xl text-gold/70 mb-6">Was macht Bazodiac einzigartig?</h2>
+                <p className="text-white/35 text-sm leading-relaxed">
+                  Keine andere App verbindet diese drei Systeme. Die Fusion enthüllt Muster, die kein einzelnes System allein zeigen kann. Westliche Astrologie beschreibt deine Persönlichkeit, BaZi dein Schicksal, Wu-Xing deine Energie — Bazodiac vereint alle drei zu einem Gesamtbild.
+                </p>
+              </section>
+
+              {/* CTA → Language Selection */}
+              <section className="px-6 py-20 text-center">
+                <h2 className="font-serif text-2xl text-white/80 mb-8">Entdecke dein Fusion-Profil</h2>
+                <button
+                  onClick={() => {
+                    try { localStorage.setItem(HERO_SEEN_KEY, "true"); } catch {}
+                    setPhase("gate");
+                  }}
+                  className="px-12 py-4 border border-gold/25 text-gold font-sans text-[11px] tracking-[0.4em] uppercase hover:bg-gold/5 hover:border-gold/50 transition-all duration-700"
+                >
+                  Jetzt kostenlos starten
+                </button>
+                <p className="mt-4 text-[9px] text-white/20 tracking-widest">Kostenlos · Kein Abo · Sofort</p>
+              </section>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── GATE: Language selection to unlock audio ── */}
       <AnimatePresence>

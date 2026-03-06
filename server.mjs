@@ -481,12 +481,6 @@ app.get("/share/:hash", async (_req, res) => {
   res.send(html);
 });
 
-// ── Landing page at /welcome (SEO entry point, does NOT block the SPA) ──
-app.get("/welcome", (_req, res) => {
-  res.sendFile(path.join(__dirname, "landing", "index.html"));
-});
-app.use("/landing", express.static(path.join(__dirname, "landing")));
-
 // ── Static files ────────────────────────────────────────────────────
 app.use(express.static(distPath, { index: "index.html" }));
 
