@@ -389,17 +389,43 @@ app.post("/api/agent/conversation", express.json(), async (req, res) => {
 });
 
 // ── Stripe: Create Checkout Session ──────────────────────────────────
+// Reuses existing Stripe customer if one exists in profiles.stripe_customer_id,
+// otherwise creates a new customer and saves the ID immediately.
 app.post("/api/checkout", express.json(), async (req, res) => {
   if (!stripe) return res.status(503).json({ error: "Payment not configured" });
+  if (!supabaseServer) return res.status(500).json({ error: "Database not configured" });
 
   const { userId, userEmail } = req.body;
   if (!userId) return res.status(400).json({ error: "userId required" });
 
   try {
+    // Look up existing Stripe customer ID from DB
+    const { data: profile } = await supabaseServer
+      .from("profiles")
+      .select("stripe_customer_id")
+      .eq("id", userId)
+      .single();
+
+    let customerId = profile?.stripe_customer_id;
+
+    if (!customerId) {
+      // First checkout — create Stripe customer and persist ID
+      const customer = await stripe.customers.create({
+        email: userEmail,
+        metadata: { userId },
+      });
+      customerId = customer.id;
+
+      await supabaseServer
+        .from("profiles")
+        .update({ stripe_customer_id: customerId })
+        .eq("id", userId);
+    }
+
     const session = await stripe.checkout.sessions.create({
+      customer: customerId,
       line_items: [{ price: process.env.STRIPE_PRICE_ID, quantity: 1 }],
       mode: "payment",
-      customer_email: userEmail,
       success_url: `${process.env.APP_URL || req.headers.origin}?upgrade=success`,
       cancel_url: `${process.env.APP_URL || req.headers.origin}?upgrade=cancelled`,
       metadata: { userId },
