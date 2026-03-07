@@ -50,7 +50,7 @@ export default function App() {
   const ambiente = useAmbientePlayer();
 
   // Fusion Ring — runs parallel to existing BAFE flow
-  const { signal, addQuizResult, completedModules } = useFusionRing(apiData, user?.id);
+  const { signal, addQuizResult, completedModules } = useFusionRing(apiData, user?.id, 3);
 
   // ── Handle ?upgrade=success redirect from Stripe ────────────────────
   useEffect(() => {

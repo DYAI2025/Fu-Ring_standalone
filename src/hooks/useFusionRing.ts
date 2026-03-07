@@ -11,9 +11,11 @@ import {
 } from '@/src/lib/fusion-ring';
 import { saveContributionEvent, loadUserEvents } from '@/src/services/contribution-events';
 
-const TOTAL_QUIZZES = 6;  // MVP: Love, Krafttier, Personality, EQ, Aura, Social
-
-export function useFusionRing(apiResults: ApiResults | null, userId?: string) {
+export function useFusionRing(
+  apiResults: ApiResults | null,
+  userId?: string,
+  totalQuizzes: number = 3,
+) {
   const [events, setEvents] = useState<ContributionEvent[]>([]);
   const [eventsLoaded, setEventsLoaded] = useState(false);
 
@@ -66,7 +68,7 @@ export function useFusionRing(apiResults: ApiResults | null, userId?: string) {
     // Brauchen mindestens W oder B
     if (!apiResults) return null;
     const completedQuizzes = new Set(events.map(e => e.source.moduleId)).size;
-    return computeFusionSignal(W, B, X, T, completedQuizzes, TOTAL_QUIZZES);
+    return computeFusionSignal(W, B, X, T, completedQuizzes, totalQuizzes);
   }, [W, B, X, T, apiResults, events]);
 
   // Quiz-Completion Handler
