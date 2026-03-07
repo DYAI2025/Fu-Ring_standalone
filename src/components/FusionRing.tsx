@@ -360,7 +360,7 @@ export function FusionRing({
     };
 
     rafIdRef.current = requestAnimationFrame(tick);
-  }, [configureCanvas]);
+  }, []);
 
   // Update targets when signal changes
   useEffect(() => {
