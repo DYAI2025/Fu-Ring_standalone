@@ -15,6 +15,7 @@ import {
   fetchAstroProfile,
 } from "./services/supabase";
 import { useAmbientePlayer } from "./hooks/useAmbientePlayer";
+import { useFusionRing } from "./hooks/useFusionRing";
 import { trackEvent } from "./lib/analytics";
 import { usePlanetarium } from "./contexts/PlanetariumContext";
 import { Volume2, VolumeX, LogOut, LayoutGrid, Telescope } from "lucide-react";
@@ -47,6 +48,9 @@ export default function App() {
 
   const profileFetchedForRef = useRef<string | null>(null);
   const ambiente = useAmbientePlayer();
+
+  // Fusion Ring — runs parallel to existing BAFE flow
+  const { signal, addQuizResult, completedModules } = useFusionRing(apiData, user?.id);
 
   // ── Handle ?upgrade=success redirect from Stripe ────────────────────
   useEffect(() => {
@@ -379,6 +383,9 @@ export default function App() {
             onStopAudio={ambiente.pause}
             onResumeAudio={ambiente.resume}
             isFirstReading={isFirstReading}
+            fusionSignal={signal}
+            onQuizComplete={addQuizResult}
+            completedModules={completedModules}
           />
         )}
       </main>

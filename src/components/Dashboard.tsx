@@ -15,6 +15,9 @@ import { getZodiacSign, getSignName } from "../lib/astro-data/zodiacSigns";
 import { getConstellationForSign } from "../lib/astro-data/constellationFromSign";
 import { usePlanetarium } from "../contexts/PlanetariumContext";
 import { Tooltip } from "./Tooltip";
+import QuizOverlay from "./QuizOverlay";
+import type { ContributionEvent } from "@/src/lib/lme/types";
+import type { FusionRingSignal } from "@/src/lib/fusion-ring";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Static data
@@ -135,6 +138,13 @@ function Badge({ text }: { text: string }) {
 // Props
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ── Quiz Catalog ─────────────────────────────────────────────────────────
+const QUIZ_CATALOG = [
+  { id: 'love_languages', title: 'Liebessprache',  moduleId: 'quiz.love_languages.v1', icon: '\uD83D\uDD25' },
+  { id: 'krafttier',      title: 'Krafttier',      moduleId: 'quiz.krafttier.v1',      icon: '\uD83D\uDC3A' },
+  { id: 'personality',    title: 'Persönlichkeit', moduleId: 'quiz.personality.v1',     icon: '\uD83C\uDFAD' },
+] as const;
+
 interface DashboardProps {
   interpretation: string;
   apiData: any;
@@ -147,6 +157,9 @@ interface DashboardProps {
   onStopAudio: () => void;
   onResumeAudio: () => void;
   isFirstReading?: boolean;
+  fusionSignal?: FusionRingSignal | null;
+  onQuizComplete?: (event: ContributionEvent) => void;
+  completedModules?: Set<string>;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -165,12 +178,16 @@ export function Dashboard({
   onStopAudio,
   onResumeAudio,
   isFirstReading = false,
+  fusionSignal,
+  onQuizComplete,
+  completedModules,
 }: DashboardProps) {
   const { lang, t } = useLanguage();
   const { isPremium } = usePremium();
   const { planetariumMode, setPlanetariumMode } = usePlanetarium();
   const [leviActive, setLeviActive] = useState(false);
   const leviSectionRef = useRef<HTMLDivElement>(null);
+  const [activeQuiz, setActiveQuiz] = useState<string | null>(null);
 
   // ── First-visit Birth Sky welcome ────────────────────────────────
   // Only show for genuinely new profiles (just completed onboarding),
@@ -900,6 +917,54 @@ export function Dashboard({
         </div>
         </PremiumGate>
       </motion.div>
+
+      {/* ═══ QUIZ SECTION ════════════════════════════════════════════ */}
+      {onQuizComplete && (
+        <motion.div className="mb-16" {...fadeIn(0.5)}>
+          <SectionDivider
+            label={lang === "de" ? "Persönlichkeit" : "Personality"}
+            title={lang === "de" ? "Deine Persönlichkeits-Tests" : "Your Personality Tests"}
+          />
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {QUIZ_CATALOG.map((quiz) => {
+              const done = completedModules?.has(quiz.moduleId);
+              return (
+                <button
+                  key={quiz.id}
+                  onClick={() => !done && setActiveQuiz(quiz.id)}
+                  className={`morning-card p-6 text-left transition-all ${
+                    done
+                      ? "opacity-60 cursor-default"
+                      : "hover:border-[#8B6914]/40 hover:shadow-lg cursor-pointer"
+                  }`}
+                >
+                  <span className="text-3xl mb-3 block">{quiz.icon}</span>
+                  <h3 className="font-serif text-lg text-[#1E2A3A] mb-1">{quiz.title}</h3>
+                  <span className={`text-[9px] uppercase tracking-[0.3em] ${
+                    done ? "text-emerald-600" : "text-[#8B6914]/50"
+                  }`}>
+                    {done
+                      ? (lang === "de" ? "Abgeschlossen ✓" : "Completed ✓")
+                      : (lang === "de" ? "Starten →" : "Start →")}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </motion.div>
+      )}
+
+      {/* Quiz Overlay */}
+      {onQuizComplete && (
+        <QuizOverlay
+          quizId={activeQuiz}
+          onComplete={(event) => {
+            onQuizComplete(event);
+            setActiveQuiz(null);
+          }}
+          onClose={() => setActiveQuiz(null)}
+        />
+      )}
 
       {/* ═══ SHARE CARD ═══════════════════════════════════════════════ */}
       <motion.div className="mb-16" {...fadeIn(0.5)}>
