@@ -16,6 +16,7 @@ import { getConstellationForSign } from "../lib/astro-data/constellationFromSign
 import { usePlanetarium } from "../contexts/PlanetariumContext";
 import { Tooltip } from "./Tooltip";
 import QuizOverlay from "./QuizOverlay";
+import { FusionRing } from "./FusionRing";
 import type { ContributionEvent } from "@/src/lib/lme/types";
 import type { FusionRingSignal } from "@/src/lib/fusion-ring";
 
@@ -917,6 +918,28 @@ export function Dashboard({
         </div>
         </PremiumGate>
       </motion.div>
+
+      {/* ═══ FUSION RING (BAZAHUAWA) ═══════════════════════════════ */}
+      {fusionSignal && (
+        <motion.div className="mb-16 flex flex-col items-center gap-4 py-8" {...fadeIn(0.5)}>
+          <h2 className="font-serif text-xl text-[#D4AF37]">
+            {lang === "de" ? "Dein Bazahuawa" : "Your Bazahuawa"}
+          </h2>
+          <FusionRing
+            signal={fusionSignal}
+            size={360}
+            showLabels={true}
+            animated={true}
+          />
+          {fusionSignal.resolution < 100 && (
+            <p className="text-sm text-[#D4AF37]/50">
+              {lang === "de"
+                ? `Auflösung: ${fusionSignal.resolution}% — Absolviere weitere Tests`
+                : `Resolution: ${fusionSignal.resolution}% — Complete more tests`}
+            </p>
+          )}
+        </motion.div>
+      )}
 
       {/* ═══ QUIZ SECTION ════════════════════════════════════════════ */}
       {onQuizComplete && (
