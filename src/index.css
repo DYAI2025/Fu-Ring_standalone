@@ -523,6 +523,32 @@ h1, h2, h3 { letter-spacing: 0.1em; }
   border-top-color: rgba(70, 130, 220, 0.18) !important;
 }
 
+/* Legal footer — planetarium dark overrides */
+.planetarium footer {
+  border-top-color: rgba(70, 130, 220, 0.12) !important;
+}
+.planetarium footer .text-\[\#1E2A3A\]\/30,
+.planetarium footer .text-\[\#1E2A3A\]\/20,
+.planetarium footer .text-\[\#1E2A3A\]\/10 {
+  color: rgba(215, 230, 255, 0.20) !important;
+}
+.planetarium footer button {
+  color: rgba(215, 230, 255, 0.20) !important;
+}
+.planetarium footer button:hover {
+  color: rgba(212, 175, 55, 0.55) !important;
+}
+.planetarium footer .bg-white\/40 {
+  background: rgba(8, 16, 42, 0.70) !important;
+  border-color: rgba(70, 130, 220, 0.18) !important;
+}
+.planetarium footer .text-\[\#1E2A3A\]\/40 {
+  color: rgba(215, 230, 255, 0.35) !important;
+}
+.planetarium footer .text-\[\#8B6914\]\/50 {
+  color: rgba(212, 175, 55, 0.50) !important;
+}
+
 /* Planetarium toggle button active state glow */
 .planetarium-toggle-active {
   color: #D4AF37 !important;

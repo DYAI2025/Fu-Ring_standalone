@@ -18,6 +18,7 @@ import { usePlanetarium } from "../contexts/PlanetariumContext";
 import { Tooltip } from "./Tooltip";
 import QuizOverlay from "./QuizOverlay";
 import { ClusterEnergySystem } from "./ClusterEnergySystem";
+import { LegalFooter } from "./LegalFooter";
 import type { ContributionEvent } from "@/src/lib/lme/types";
 import type { FusionRingSignal } from "@/src/lib/fusion-ring";
 
@@ -26,6 +27,61 @@ import type { FusionRingSignal } from "@/src/lib/fusion-ring";
 // ─────────────────────────────────────────────────────────────────────────────
 
 const EMPTY_MODULE_SET = new Set<string>();
+
+// ── Session-random bilingual quotes ──────────────────────────────────────
+const BAZODIAC_QUOTES: { en: string; de: string }[] = [
+  {
+    en: "The stars compel nothing — they invite. The Atlas shows the path you are already on.",
+    de: "Die Sterne erzwingen nichts, sie laden ein. Der Atlas zeigt den Weg, den du bereits gehst.",
+  },
+  {
+    en: "As long as we don't examine the dynamics, they act like fate. But once we look, they become our flow.",
+    de: "Solange wir die Dynamiken nicht betrachten, wirken sie wie Schicksal. Schauen wir aber hin, dann werden sie zu unserem Fluss.",
+  },
+  {
+    en: "Your chart is not a verdict — it is a conversation between who you are and who you are becoming.",
+    de: "Dein Chart ist kein Urteil — es ist ein Gespräch zwischen dem, wer du bist, und dem, wer du wirst.",
+  },
+  {
+    en: "The cosmos doesn't define you. It reflects the possibilities you carry within.",
+    de: "Der Kosmos definiert dich nicht. Er spiegelt die Möglichkeiten, die du in dir trägst.",
+  },
+  {
+    en: "Between the constellations lies not distance, but resonance — just as between your elements.",
+    de: "Zwischen den Sternbildern liegt keine Distanz, sondern Resonanz — genau wie zwischen deinen Elementen.",
+  },
+  {
+    en: "What the sky held at your birth was not a plan, but a palette. You choose the colours.",
+    de: "Was der Himmel bei deiner Geburt bereithielt, war kein Plan, sondern eine Palette. Du wählst die Farben.",
+  },
+  {
+    en: "Your elements don't fight each other — they negotiate. Balance is not stillness, it is dance.",
+    de: "Deine Elemente bekämpfen sich nicht — sie verhandeln. Balance ist nicht Stillstand, sondern Tanz.",
+  },
+  {
+    en: "The pillar that feels weakest often carries the most untapped strength.",
+    de: "Die Säule, die sich am schwächsten anfühlt, trägt oft die meiste ungenutzte Kraft.",
+  },
+  {
+    en: "Awareness is the bridge between pattern and freedom. Your chart builds that bridge.",
+    de: "Bewusstsein ist die Brücke zwischen Muster und Freiheit. Dein Chart baut diese Brücke.",
+  },
+  {
+    en: "No two birth skies are alike — and that is precisely your power.",
+    de: "Kein Geburtshimmel gleicht dem anderen — und genau das ist deine Kraft.",
+  },
+  {
+    en: "The universe doesn't whisper instructions. It hums possibilities — listen closely.",
+    de: "Das Universum flüstert keine Anweisungen. Es summt Möglichkeiten — hör genau hin.",
+  },
+  {
+    en: "Your cosmic signature is not written in stone. It is written in light — always shifting, always yours.",
+    de: "Deine kosmische Signatur ist nicht in Stein geschrieben. Sie ist in Licht geschrieben — immer in Bewegung, immer deine.",
+  },
+];
+
+// Pick one quote per session (stable across re-renders)
+const SESSION_QUOTE_INDEX = Math.floor(Math.random() * BAZODIAC_QUOTES.length);
 
 const WESTERN_EMOJIS: Record<string, string> = {
   Aries: "♈", Taurus: "♉", Gemini: "♊", Cancer: "♋",
@@ -355,7 +411,7 @@ export function Dashboard({
 
       {/* ═══ PAGE HEADER ═══════════════════════════════════════════════ */}
       <motion.header
-        className="mb-12"
+        className="mb-12 text-center"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.7, ease: "easeOut" }}
@@ -363,22 +419,21 @@ export function Dashboard({
         <p className="text-[#8B6914]/55 text-[9px] uppercase tracking-[0.5em] mb-3">
           {t("dashboard.welcome")}
         </p>
-        <div className="flex items-start justify-between gap-4">
-          {/* FR-01: Title updated via translation key */}
-          <h1 className="font-serif text-2xl sm:text-4xl md:text-5xl leading-tight text-[#1E2A3A] max-w-xl">
+        <div className="flex items-center justify-center gap-4">
+          <h1 className="font-serif text-3xl sm:text-[2.75rem] md:text-[3.5rem] leading-tight text-[#1E2A3A]">
             {t("dashboard.title")}
           </h1>
           <button
             onClick={onRegenerate}
             disabled={isLoading}
-            className="mt-1 shrink-0 p-3 text-[#8B6914]/45 hover:text-[#8B6914] hover:bg-[#8B6914]/10 rounded-full transition-all disabled:opacity-40 disabled:cursor-not-allowed border border-[#8B6914]/20"
+            className="shrink-0 p-2.5 text-[#8B6914]/45 hover:text-[#8B6914] hover:bg-[#8B6914]/10 rounded-full transition-all disabled:opacity-40 disabled:cursor-not-allowed border border-[#8B6914]/20"
             title="Regenerate"
           >
-            <RefreshCw className={`w-5 h-5 ${isLoading ? "animate-spin" : ""}`} />
+            <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
           </button>
         </div>
-        <p className="mt-4 italic text-[#1E2A3A]/38 font-serif text-base md:max-w-xl leading-relaxed">
-          {t("dashboard.quote")}
+        <p className="mt-4 italic text-[#1E2A3A]/42 font-serif text-base leading-relaxed max-w-xl mx-auto">
+          &ldquo;{BAZODIAC_QUOTES[SESSION_QUOTE_INDEX][lang]}&rdquo;
         </p>
       </motion.header>
 
@@ -980,6 +1035,9 @@ export function Dashboard({
           moonSign={apiData?.western?.moon_sign || ''}
         />
       </motion.div>
+
+      {/* ═══ LEGAL FOOTER ═══════════════════════════════════════════════ */}
+      <LegalFooter lang={lang} />
     </motion.div>
   );
 }

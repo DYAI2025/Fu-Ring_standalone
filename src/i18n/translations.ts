@@ -69,8 +69,8 @@ const translationsEn: DeepStringRecord = {
     startOver: "Start Over",
     fallbackNote: "Some calculations could not be loaded live. Fallback data was partially used:",
     welcome: "Welcome to the Atlas",
-    title: "Your Bazodiac System.",
-    quote: '"The stars compel nothing — they invite. The Atlas shows the path you are already on."',
+    title: "Your Bazodiac",
+    quote: "",
     western: {
       sectionLabel: "Western Astrology",
       sectionTitle: "Your Star Signs",
@@ -221,8 +221,8 @@ const translationsDe: DeepStringRecord = {
     startOver: "Neu starten",
     fallbackNote: "Einige Berechnungen konnten nicht live geladen werden. Es wurden teilweise Fallback-Daten genutzt:",
     welcome: "Willkommen im Atlas",
-    title: "Dein Bazodiac-System.",
-    quote: '"Die Sterne erzwingen nichts, sie laden ein. Der Atlas zeigt den Weg, den du bereits gehst."',
+    title: "Dein Bazodiac",
+    quote: "",
     western: {
       sectionLabel: "Westliche Astrologie",
       sectionTitle: "Deine Sternzeichen",
