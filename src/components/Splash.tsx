@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { LandingHero } from "./LandingHero";
 
 interface SplashProps {
   onEnter: () => void;
@@ -190,7 +191,7 @@ export function Splash({ onEnter, onLanguageSelect }: SplashProps) {
         </video>
       )}
 
-      {/* ── HERO: Marketing / Value Prop ── */}
+      {/* ── HERO: Landing Page ── */}
       <AnimatePresence>
         {phase === "hero" && (
           <motion.div
@@ -199,109 +200,14 @@ export function Splash({ onEnter, onLanguageSelect }: SplashProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.8 }}
-            className="absolute inset-0 z-50 overflow-y-auto bg-obsidian"
+            className="absolute inset-0 z-50 overflow-y-auto"
           >
-            <div className="min-h-screen flex flex-col">
-              {/* Hero Section */}
-              <section className="flex-1 flex flex-col items-center justify-center text-center px-6 py-20 min-h-screen">
-                <motion.p
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.3, duration: 1.5 }}
-                  className="font-sans text-[10px] uppercase tracking-[0.6em] text-gold/50 mb-8"
-                >
-                  Bazodiac
-                </motion.p>
-                <motion.h1
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.6, duration: 1.5 }}
-                  className="font-serif text-3xl md:text-5xl text-white/90 max-w-3xl leading-tight mb-6"
-                >
-                  Dein kosmisches Profil — drei Systeme, ein Bild
-                </motion.h1>
-                <motion.p
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 1, duration: 1.5 }}
-                  className="font-sans text-sm md:text-base text-white/40 max-w-xl mb-12 leading-relaxed"
-                >
-                  Bazodiac fusioniert westliche Astrologie, chinesisches BaZi und Wu-Xing zu einem Reading, das nur wir erstellen können.
-                </motion.p>
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 1.5, duration: 1 }}
-                  className="text-white/15 text-xs animate-bounce"
-                >
-                  ↓
-                </motion.div>
-              </section>
-
-              {/* How It Works */}
-              <section className="px-6 py-16 max-w-4xl mx-auto w-full">
-                <h2 className="font-serif text-2xl text-white/80 text-center mb-12">So funktioniert es</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                  {[
-                    { step: "1", title: "Geburtsdaten eingeben", desc: "Datum, Uhrzeit und Ort — mehr brauchen wir nicht." },
-                    { step: "2", title: "Drei Systeme berechnen", desc: "Western, BaZi und Wu-Xing analysieren gleichzeitig deine kosmische Signatur." },
-                    { step: "3", title: "Fusion-Reading erhalten", desc: "Ein personalisiertes Reading, das Muster enthüllt, die kein System allein zeigen kann." },
-                  ].map((s) => (
-                    <div key={s.step} className="text-center">
-                      <div className="w-10 h-10 rounded-full border border-gold/20 flex items-center justify-center mx-auto mb-4 text-gold/60 text-sm font-sans">
-                        {s.step}
-                      </div>
-                      <h3 className="font-serif text-lg text-white/70 mb-2">{s.title}</h3>
-                      <p className="text-white/30 text-sm leading-relaxed">{s.desc}</p>
-                    </div>
-                  ))}
-                </div>
-              </section>
-
-              {/* Features */}
-              <section className="px-6 py-16 max-w-5xl mx-auto w-full">
-                <h2 className="font-serif text-2xl text-white/80 text-center mb-12">Sechs Dimensionen</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {[
-                    { icon: "☉", title: "Westliche Astrologie", desc: "Sonne, Mond, Aszendent — präzise berechnet." },
-                    { icon: "柱", title: "Chinesisches BaZi", desc: "Die Vier Säulen des Schicksals enthüllen verborgene Talente." },
-                    { icon: "五", title: "Wu-Xing Balance", desc: "Fünf Elemente zeigen, wo deine Energie fließt." },
-                    { icon: "✦", title: "KI-Interpretation", desc: "Personalisiert durch Gemini — verständlich verwoben." },
-                    { icon: "◎", title: "3D Planetarium", desc: "Interaktive Sternenkarte deiner Geburtsstellung." },
-                    { icon: "♪", title: "Levi Bazi", desc: "Dein persönlicher Astro-Berater mit Stimme." },
-                  ].map((f) => (
-                    <div key={f.title} className="border border-white/5 rounded-xl p-5 bg-white/[0.02]">
-                      <span className="text-2xl mb-3 block text-gold/50">{f.icon}</span>
-                      <h3 className="font-serif text-base text-white/70 mb-1">{f.title}</h3>
-                      <p className="text-white/30 text-sm">{f.desc}</p>
-                    </div>
-                  ))}
-                </div>
-              </section>
-
-              {/* USP */}
-              <section className="px-6 py-16 max-w-2xl mx-auto w-full text-center">
-                <h2 className="font-serif text-2xl text-gold/70 mb-6">Was macht Bazodiac einzigartig?</h2>
-                <p className="text-white/35 text-sm leading-relaxed">
-                  Keine andere App verbindet diese drei Systeme. Die Fusion enthüllt Muster, die kein einzelnes System allein zeigen kann. Westliche Astrologie beschreibt deine Persönlichkeit, BaZi dein Schicksal, Wu-Xing deine Energie — Bazodiac vereint alle drei zu einem Gesamtbild.
-                </p>
-              </section>
-
-              {/* CTA → Language Selection */}
-              <section className="px-6 py-20 text-center">
-                <h2 className="font-serif text-2xl text-white/80 mb-8">Entdecke dein Fusion-Profil</h2>
-                <button
-                  onClick={() => {
-                    try { localStorage.setItem(HERO_SEEN_KEY, "true"); } catch {}
-                    setPhase("gate");
-                  }}
-                  className="px-12 py-4 border border-gold/25 text-gold font-sans text-[11px] tracking-[0.4em] uppercase hover:bg-gold/5 hover:border-gold/50 transition-all duration-700"
-                >
-                  Jetzt kostenlos starten
-                </button>
-                <p className="mt-4 text-[9px] text-white/20 tracking-widest">Kostenlos · Kein Abo · Sofort</p>
-              </section>
-            </div>
+            <LandingHero
+              onContinue={() => {
+                try { localStorage.setItem(HERO_SEEN_KEY, "true"); } catch {}
+                setPhase("gate");
+              }}
+            />
           </motion.div>
         )}
       </AnimatePresence>
@@ -363,103 +269,340 @@ export function Splash({ onEnter, onLanguageSelect }: SplashProps) {
         </motion.button>
       )}
 
-      {/* ── CSS ANIMATION LAYER ── */}
+      {/* ── ENTER SCREEN — cinematic reveal after video ── */}
       <div
-        className={`absolute inset-0 z-20 flex flex-col items-center justify-center transition-opacity duration-[3000ms] ${
+        className={`enter-screen absolute inset-0 z-20 transition-opacity duration-[3000ms] ${
           phase === "animation" || videoFading ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
       >
-        {/* Star Atlas Background */}
+        {/* Deep space gradient base */}
+        <div className="absolute inset-0 enter-bg" />
+
+        {/* Noise texture */}
+        <div className="absolute inset-0 enter-noise pointer-events-none" />
+
+        {/* Star Atlas — fades in at stage 2 */}
         <div
-          className={`absolute inset-0 transition-opacity duration-[3000ms] ${
-            stage >= 2 ? "opacity-40" : "opacity-0"
+          className={`absolute inset-0 transition-opacity duration-[4000ms] ease-in-out ${
+            stage >= 2 ? "opacity-30" : "opacity-0"
           }`}
         >
           <img
             src="https://r2-bucket.flowith.net/f/77e7a2286de210ee/nocturne_atlas_star_map_index_1%404096x2286.jpeg"
-            alt="Star Atlas"
-            className="w-full h-full object-cover scale-125 blur-sm brightness-50"
+            alt=""
+            className="w-full h-full object-cover scale-110 blur-[2px] brightness-[0.4]"
           />
         </div>
 
-        {/* Singularity Point */}
-        <div className="relative flex items-center justify-center">
+        {/* Nebula glow — mouse-reactive ambient light */}
+        <div
+          className={`absolute transition-opacity duration-[3000ms] ${
+            stage >= 1 ? "opacity-100" : "opacity-0"
+          }`}
+          style={{
+            top: "30%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: "800px",
+            height: "800px",
+            background: "radial-gradient(circle, rgba(99,102,241,0.08) 0%, rgba(129,140,248,0.02) 40%, transparent 70%)",
+            filter: "blur(80px)",
+            mixBlendMode: "screen",
+            pointerEvents: "none",
+          }}
+        />
+
+        {/* Starfield particles */}
+        <EnterStarfield active={stage >= 1} />
+
+        {/* Particle canvas */}
+        <EnterParticles active={stage >= 1} />
+
+        {/* ── Central composition ── */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+
+          {/* Synthesis orb — glowing core */}
+          <div className="relative flex items-center justify-center">
+            {/* Outer ring pulse */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={
+                stage >= 1
+                  ? { opacity: [0, 0.15, 0.05], scale: [0.8, 1.2, 1] }
+                  : {}
+              }
+              transition={{ duration: 4, ease: "easeInOut" }}
+              className="absolute w-48 h-48 md:w-64 md:h-64 rounded-full border border-white/[0.06]"
+              style={{
+                boxShadow: stage >= 1
+                  ? "0 0 80px 20px rgba(99,102,241,0.06), inset 0 0 60px rgba(212,175,55,0.04)"
+                  : "none",
+              }}
+            />
+
+            {/* Inner singularity */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0 }}
+              animate={
+                stage === 1
+                  ? { opacity: 1, scale: 1, boxShadow: "0 0 40px 8px rgba(255,255,255,0.6)" }
+                  : stage >= 2
+                  ? { opacity: 0.02, scale: 80, boxShadow: "0 0 60px 12px rgba(255,255,255,0.3)" }
+                  : {}
+              }
+              transition={{ duration: stage === 1 ? 2.5 : 4, ease: "easeInOut" }}
+              className="w-1.5 h-1.5 bg-white rounded-full"
+            />
+
+            {/* Cross beams */}
+            <motion.div
+              initial={{ opacity: 0, scaleY: 0 }}
+              animate={stage >= 2 ? { opacity: 0.12, scaleY: 1 } : {}}
+              transition={{ duration: 3, ease: "easeOut" }}
+              className="absolute w-px h-[50vh] bg-gradient-to-b from-transparent via-white/20 to-transparent blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scaleX: 0 }}
+              animate={stage >= 2 ? { opacity: 0.08, scaleX: 1 } : {}}
+              transition={{ duration: 3, delay: 0.3, ease: "easeOut" }}
+              className="absolute h-px w-[50vw] bg-gradient-to-r from-transparent via-white/15 to-transparent blur-sm"
+            />
+
+            {/* Diagonal rays */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={stage >= 2 ? { opacity: 0.1, scale: 1.5 } : {}}
+              transition={{ duration: 4 }}
+              className="absolute w-px h-80 bg-white/10 blur-xl rotate-45 origin-center"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={stage >= 2 ? { opacity: 0.1, scale: 1.5 } : {}}
+              transition={{ duration: 4, delay: 0.2 }}
+              className="absolute w-px h-80 bg-white/10 blur-xl -rotate-45 origin-center"
+            />
+          </div>
+
+          {/* ── Title block ── */}
+          <div className="mt-16 md:mt-24 text-center z-10 px-6">
+            <motion.p
+              initial={{ opacity: 0, letterSpacing: "0.2em" }}
+              animate={stage >= 3 ? { opacity: 0.5, letterSpacing: "0.8em" } : {}}
+              transition={{ duration: 3 }}
+              className="font-sans text-[8px] md:text-[9px] uppercase text-white/40 mb-6 md:mb-8"
+            >
+              Fusioned Firmament
+            </motion.p>
+
+            <motion.h1
+              initial={{ opacity: 0, y: 40 }}
+              animate={stage >= 3 ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 2.5, ease: [0.16, 1, 0.3, 1] }}
+              className="enter-title font-landing-display text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-4 md:mb-6"
+            >
+              Bazodiac
+            </motion.h1>
+
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={stage >= 3 ? { opacity: 1 } : {}}
+              transition={{ duration: 2, delay: 0.8 }}
+              className="font-serif text-sm md:text-lg tracking-[0.15em] md:tracking-[0.25em] text-white/50 max-w-md mx-auto leading-relaxed"
+            >
+              Coniunctio Caelorum
+              <br />
+              <span className="text-white/30 text-xs md:text-sm">Occidentalis et Orientalis</span>
+            </motion.p>
+          </div>
+
+          {/* ── Enter button ── */}
           <motion.div
-            initial={{
-              opacity: 0,
-              scale: 1,
-              boxShadow: "0 0 0px 0px rgba(255,255,255,0)",
-            }}
-            animate={
-              stage === 1
-                ? {
-                    opacity: 1,
-                    scale: 1,
-                    boxShadow: "0 0 30px 4px rgba(255,255,255,0.8)",
-                  }
-                : stage >= 2
-                ? {
-                    opacity: 0.05,
-                    scale: 120,
-                    boxShadow: "0 0 30px 4px rgba(255,255,255,0.8)",
-                  }
-                : {}
-            }
-            transition={{ duration: stage === 1 ? 2 : 4, ease: "easeInOut" }}
-            className="w-1 h-1 bg-white rounded-full"
-          />
-          <motion.div
-            initial={{ opacity: 0, scale: 1 }}
-            animate={stage >= 2 ? { opacity: 0.2, scale: 2 } : {}}
-            transition={{ duration: 4 }}
-            className="absolute w-0.5 h-64 bg-white/10 blur-xl rotate-45"
-          />
-          <motion.div
-            initial={{ opacity: 0, scale: 1 }}
-            animate={stage >= 2 ? { opacity: 0.2, scale: 2 } : {}}
-            transition={{ duration: 4 }}
-            className="absolute w-0.5 h-64 bg-white/10 blur-xl -rotate-45"
-          />
+            initial={{ opacity: 0, y: 20 }}
+            animate={stage >= 4 ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 1.5, ease: "easeOut" }}
+            className="absolute bottom-16 md:bottom-24 text-center"
+          >
+            <button
+              onClick={onEnter}
+              className="enter-btn group relative px-14 py-5 border border-white/[0.12] text-white/80 font-sans text-[10px] tracking-[0.5em] uppercase backdrop-blur-md transition-all duration-700 hover:border-white/25 hover:text-white cursor-pointer"
+            >
+              <span className="relative z-10">Enter</span>
+              <div className="absolute inset-0 bg-white/[0.03] opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+              <div className="absolute inset-0 enter-btn-glow opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+            </button>
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={stage >= 4 ? { opacity: 1 } : {}}
+              transition={{ duration: 1, delay: 0.8 }}
+              className="mt-5 text-[8px] text-white/20 tracking-[0.4em] uppercase"
+            >
+              Awaken the cosmos
+            </motion.p>
+          </motion.div>
         </div>
 
-        {/* Title */}
-        <div className="mt-20 text-center z-10">
-          <motion.h1
-            initial={{ opacity: 0, y: 32 }}
-            animate={stage >= 3 ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 2 }}
-            className="font-serif text-3xl tracking-[0.3em] mb-4"
-          >
-            Coniunctio Caelorum Occidentalis et Orientalis
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={stage >= 3 ? { opacity: 1 } : {}}
-            transition={{ duration: 2, delay: 0.5 }}
-            className="font-sans text-[10px] uppercase tracking-[0.5em] text-gold/80"
-          >
-            Bazodiac
-          </motion.p>
-        </div>
-
-        {/* Enter Button */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={stage >= 4 ? { opacity: 1 } : {}}
-          transition={{ duration: 1 }}
-          className="absolute bottom-20 text-center"
-        >
-          <button
-            onClick={onEnter}
-            className="px-12 py-4 border border-gold/20 text-gold font-sans text-[10px] tracking-[0.4em] uppercase hover:bg-gold/5 hover:border-gold/50 transition-all backdrop-blur-sm"
-          >
-            Enter
-          </button>
-          <p className="mt-4 text-[8px] text-white/30 tracking-widest italic">
-            Awaken the cosmos
-          </p>
-        </motion.div>
+        {/* Bottom gradient fade */}
+        <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-[#020617] to-transparent pointer-events-none" />
       </div>
     </div>
+  );
+}
+
+// ── Enter Screen Sub-Components ─────────────────────────────────────
+
+/** Starfield — twinkling gold dots */
+function EnterStarfield({ active }: { active: boolean }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!active) return;
+    const container = containerRef.current;
+    if (!container) return;
+
+    const stars: HTMLDivElement[] = [];
+    const count = 80;
+
+    for (let i = 0; i < count; i++) {
+      const star = document.createElement("div");
+      const size = Math.random() * 1.8 + 0.4;
+      const maxOpacity = Math.random() * 0.6 + 0.1;
+      Object.assign(star.style, {
+        position: "absolute",
+        width: `${size}px`,
+        height: `${size}px`,
+        left: `${Math.random() * 100}%`,
+        top: `${Math.random() * 100}%`,
+        borderRadius: "50%",
+        backgroundColor: "#d4af37",
+        opacity: "0",
+        boxShadow: `0 0 ${size * 3}px rgba(212,175,55,0.3)`,
+        willChange: "opacity",
+      });
+      container.appendChild(star);
+      stars.push(star);
+
+      star.animate(
+        [{ opacity: 0 }, { opacity: maxOpacity }, { opacity: 0 }],
+        {
+          duration: (Math.random() * 3 + 2) * 1000,
+          delay: Math.random() * 4000,
+          iterations: Infinity,
+          easing: "ease-in-out",
+        },
+      );
+    }
+
+    return () => { stars.forEach((s) => s.remove()); };
+  }, [active]);
+
+  return (
+    <div
+      ref={containerRef}
+      className={`absolute inset-0 pointer-events-none transition-opacity duration-[3000ms] ${
+        active ? "opacity-100" : "opacity-0"
+      }`}
+    />
+  );
+}
+
+/** Particle canvas — floating motes that drift and respond to gravity center */
+function EnterParticles({ active }: { active: boolean }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    if (!active) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    let animId = 0;
+    let width = 0;
+    let height = 0;
+
+    interface Mote {
+      x: number;
+      y: number;
+      vx: number;
+      vy: number;
+      r: number;
+      phase: number;
+    }
+
+    let motes: Mote[] = [];
+
+    const resize = () => {
+      width = canvas.width = canvas.offsetWidth;
+      height = canvas.height = canvas.offsetHeight;
+      motes = [];
+      for (let i = 0; i < 60; i++) {
+        motes.push({
+          x: Math.random() * width,
+          y: Math.random() * height,
+          vx: (Math.random() - 0.5) * 0.15,
+          vy: (Math.random() - 0.5) * 0.15,
+          r: Math.random() * 1.2 + 0.3,
+          phase: Math.random() * Math.PI * 2,
+        });
+      }
+    };
+
+    const cx = () => width / 2;
+    const cy = () => height * 0.4;
+
+    const draw = () => {
+      ctx.clearRect(0, 0, width, height);
+
+      for (const m of motes) {
+        // Gentle pull toward center
+        const dx = cx() - m.x;
+        const dy = cy() - m.y;
+        const dist = Math.sqrt(dx * dx + dy * dy) + 1;
+        const pull = Math.min(0.003, 30 / (dist * dist));
+        m.vx += dx * pull * 0.01;
+        m.vy += dy * pull * 0.01;
+
+        // Orbital drift
+        m.vx += (-dy / dist) * 0.0004;
+        m.vy += (dx / dist) * 0.0004;
+
+        m.vx *= 0.995;
+        m.vy *= 0.995;
+        m.x += m.vx;
+        m.y += m.vy;
+
+        // Wrap
+        if (m.x < -10) m.x = width + 10;
+        if (m.x > width + 10) m.x = -10;
+        if (m.y < -10) m.y = height + 10;
+        if (m.y > height + 10) m.y = -10;
+
+        const alpha = 0.15 + Math.sin((m.phase += 0.012)) * 0.1;
+        ctx.fillStyle = `rgba(212,175,55,${alpha})`;
+        ctx.beginPath();
+        ctx.arc(m.x, m.y, m.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      animId = requestAnimationFrame(draw);
+    };
+
+    resize();
+    draw();
+    window.addEventListener("resize", resize);
+
+    return () => {
+      cancelAnimationFrame(animId);
+      window.removeEventListener("resize", resize);
+    };
+  }, [active]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className={`absolute inset-0 w-full h-full pointer-events-none transition-opacity duration-[3000ms] ${
+        active ? "opacity-60" : "opacity-0"
+      }`}
+    />
   );
 }

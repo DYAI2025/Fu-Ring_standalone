@@ -8,6 +8,7 @@ import { BirthChartOrrery } from "./BirthChartOrrery";
 import { ShareCard } from "./ShareCard";
 import { PremiumGate } from "./PremiumGate";
 import { usePremium } from "../hooks/usePremium";
+import { useAuth } from "../contexts/AuthContext";
 import { useLanguage } from "../contexts/LanguageContext";
 import { WUXING_ELEMENTS, getWuxingByKey } from "../lib/astro-data/wuxing";
 import { getBranchByAnimal } from "../lib/astro-data/earthlyBranches";
@@ -181,8 +182,26 @@ export function Dashboard({
 }: DashboardProps) {
   const { lang, t } = useLanguage();
   const { isPremium } = usePremium();
+  const { user } = useAuth();
   const { planetariumMode, setPlanetariumMode } = usePlanetarium();
   const [leviActive, setLeviActive] = useState(false);
+  const [leviUpgrading, setLeviUpgrading] = useState(false);
+
+  const handleLeviUpgrade = async () => {
+    setLeviUpgrading(true);
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user?.id, userEmail: user?.email }),
+      });
+      const { url } = await res.json();
+      if (url) window.location.href = url;
+      else setLeviUpgrading(false);
+    } catch {
+      setLeviUpgrading(false);
+    }
+  };
   const leviSectionRef = useRef<HTMLDivElement>(null);
   const [activeQuiz, setActiveQuiz] = useState<string | null>(null);
 
@@ -914,13 +933,13 @@ export function Dashboard({
               </AnimatePresence>
             </>
           ) : (
-            <PremiumGate teaser={t("dashboard.premium.teaserLevi")}>
-              <button
-                className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-full text-[10px] uppercase tracking-[0.2em] font-semibold bg-[#8B6914]/10 border border-[#8B6914]/30 text-[#8B6914]"
-              >
-                <Lock className="w-4 h-4" /> {t("dashboard.levi.callBtn")}
-              </button>
-            </PremiumGate>
+            <button
+              onClick={handleLeviUpgrade}
+              disabled={leviUpgrading}
+              className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-full text-[10px] uppercase tracking-[0.2em] font-semibold bg-gold/10 border border-gold/30 text-gold hover:bg-gold/20 transition-all disabled:opacity-60 disabled:cursor-wait"
+            >
+              {leviUpgrading ? "..." : <><Lock className="w-4 h-4" /> {t("dashboard.premium.cta")}</>}
+            </button>
           )}
         </div>
       </motion.div>
