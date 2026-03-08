@@ -8,13 +8,15 @@ import {
   wuxingToSectors,
   fuseAllEvents,
   computeFusionSignal,
+  findClusterForModule,
+  isClusterComplete,
+  CLUSTER_REGISTRY,
 } from '@/src/lib/fusion-ring';
 import { saveContributionEvent, loadUserEvents } from '@/src/services/contribution-events';
 
 export function useFusionRing(
   apiResults: ApiResults | null,
   userId?: string,
-  totalQuizzes: number = 3,
 ) {
   const [events, setEvents] = useState<ContributionEvent[]>([]);
   const [eventsLoaded, setEventsLoaded] = useState(false);
@@ -60,15 +62,26 @@ export function useFusionRing(
     return wuxingToSectors(apiResults.wuxing.elements);
   }, [apiResults?.wuxing]);
 
-  // T(s) aus Quiz-Events
-  const T = useMemo(() => fuseAllEvents(events), [events]);
+  // T(s) — only fire events whose cluster is complete (or standalone)
+  const activeEvents = useMemo(() => {
+    const completedIds = new Set(events.map(e => e.source.moduleId));
+    return events.filter(e => {
+      const cluster = findClusterForModule(e.source.moduleId);
+      if (!cluster) return true; // standalone → immediately active
+      return isClusterComplete(cluster, completedIds);
+    });
+  }, [events]);
+
+  const T = useMemo(() => fuseAllEvents(activeEvents), [activeEvents]);
 
   // Finale Signal-Komposition
   const signal: FusionRingSignal | null = useMemo(() => {
-    // Brauchen mindestens W oder B
     if (!apiResults) return null;
-    const completedQuizzes = new Set(events.map(e => e.source.moduleId)).size;
-    return computeFusionSignal(W, B, X, T, completedQuizzes, totalQuizzes);
+    const completedIds = new Set(events.map(e => e.source.moduleId));
+    const completedClusters = CLUSTER_REGISTRY.filter(c =>
+      isClusterComplete(c, completedIds)
+    ).length;
+    return computeFusionSignal(W, B, X, T, completedClusters, CLUSTER_REGISTRY.length);
   }, [W, B, X, T, apiResults, events]);
 
   // Quiz-Completion Handler

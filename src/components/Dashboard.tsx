@@ -16,13 +16,15 @@ import { getConstellationForSign } from "../lib/astro-data/constellationFromSign
 import { usePlanetarium } from "../contexts/PlanetariumContext";
 import { Tooltip } from "./Tooltip";
 import QuizOverlay from "./QuizOverlay";
-import { FusionRing } from "./FusionRing";
+import { ClusterEnergySystem } from "./ClusterEnergySystem";
 import type { ContributionEvent } from "@/src/lib/lme/types";
 import type { FusionRingSignal } from "@/src/lib/fusion-ring";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Static data
 // ─────────────────────────────────────────────────────────────────────────────
+
+const EMPTY_MODULE_SET = new Set<string>();
 
 const WESTERN_EMOJIS: Record<string, string> = {
   Aries: "♈", Taurus: "♉", Gemini: "♊", Cancer: "♋",
@@ -139,12 +141,6 @@ function Badge({ text }: { text: string }) {
 // Props
 // ─────────────────────────────────────────────────────────────────────────────
 
-// ── Quiz Catalog ─────────────────────────────────────────────────────────
-const QUIZ_CATALOG = [
-  { id: 'love_languages', title: 'Liebessprache',  moduleId: 'quiz.love_languages.v1', icon: '\uD83D\uDD25' },
-  { id: 'krafttier',      title: 'Krafttier',      moduleId: 'quiz.krafttier.v1',      icon: '\uD83D\uDC3A' },
-  { id: 'personality',    title: 'Persönlichkeit', moduleId: 'quiz.personality.v1',     icon: '\uD83C\uDFAD' },
-] as const;
 
 interface DashboardProps {
   interpretation: string;
@@ -919,74 +915,20 @@ export function Dashboard({
         </PremiumGate>
       </motion.div>
 
-      {/* ═══ FUSION RING (BAZAHUAWA) ═══════════════════════════════ */}
-      {fusionSignal && (
-        <motion.div className="mb-16" {...fadeIn(0.5)}>
-          <div
-            className="mx-auto flex flex-col items-center gap-4 rounded-2xl px-4 sm:px-6 py-8"
-            style={{
-              background: 'radial-gradient(ellipse at center, #0a0f1a 0%, #00050A 70%)',
-              border: '1px solid rgba(212, 175, 55, 0.12)',
-              boxShadow: '0 0 60px rgba(0,5,10,0.5), inset 0 0 30px rgba(0,0,0,0.3)',
-              maxWidth: '520px',
-            }}
-          >
-            <h2
-              className="font-serif text-lg sm:text-xl tracking-wide"
-              style={{ color: '#D4AF37' }}
-            >
-              {lang === "de" ? "Dein Bazahuawa" : "Your Bazahuawa"}
-            </h2>
-            <FusionRing
-              signal={fusionSignal}
-              size={360}
-              showLabels={true}
-              animated={true}
-            />
-            {fusionSignal.resolution < 100 && (
-              <p className="text-xs sm:text-sm text-center" style={{ color: 'rgba(212, 175, 55, 0.45)' }}>
-                {lang === "de"
-                  ? `Auflösung: ${fusionSignal.resolution}% — Absolviere weitere Tests`
-                  : `Resolution: ${fusionSignal.resolution}% — Complete more tests`}
-              </p>
-            )}
-          </div>
-        </motion.div>
-      )}
-
-      {/* ═══ QUIZ SECTION ════════════════════════════════════════════ */}
+      {/* ═══ CLUSTER ENERGY SYSTEM ═════════════════════════════════ */}
       {onQuizComplete && (
         <motion.div className="mb-16" {...fadeIn(0.5)}>
           <SectionDivider
             label={lang === "de" ? "Persönlichkeit" : "Personality"}
-            title={lang === "de" ? "Deine Persönlichkeits-Tests" : "Your Personality Tests"}
+            title={lang === "de" ? "Dein Energie-System" : "Your Energy System"}
           />
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {QUIZ_CATALOG.map((quiz) => {
-              const done = completedModules?.has(quiz.moduleId);
-              return (
-                <button
-                  key={quiz.id}
-                  onClick={() => !done && setActiveQuiz(quiz.id)}
-                  className={`morning-card p-5 sm:p-6 text-left transition-all ${
-                    done
-                      ? "opacity-60 cursor-default"
-                      : "hover:border-[#8B6914]/40 hover:shadow-lg cursor-pointer"
-                  }`}
-                >
-                  <span className="text-2xl sm:text-3xl mb-2 sm:mb-3 block">{quiz.icon}</span>
-                  <h3 className="font-serif text-base sm:text-lg text-[#1E2A3A] mb-1 truncate">{quiz.title}</h3>
-                  <span className={`text-[9px] uppercase tracking-[0.3em] ${
-                    done ? "text-emerald-600" : "text-[#8B6914]/50"
-                  }`}>
-                    {done
-                      ? (lang === "de" ? "Abgeschlossen ✓" : "Completed ✓")
-                      : (lang === "de" ? "Starten →" : "Start →")}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+          <ClusterEnergySystem
+            signal={fusionSignal ?? null}
+            completedModules={completedModules ?? EMPTY_MODULE_SET}
+            onStartQuiz={(quizId) => setActiveQuiz(quizId)}
+            isPremium={isPremium}
+            lang={lang}
+          />
         </motion.div>
       )}
 
@@ -996,6 +938,7 @@ export function Dashboard({
           quizId={activeQuiz}
           onComplete={(event) => {
             onQuizComplete(event);
+            setActiveQuiz(null);
           }}
           onClose={() => setActiveQuiz(null)}
         />

@@ -7,6 +7,18 @@ import { QuizErrorBoundary } from './QuizErrorBoundary';
 const LoveLanguagesQuiz = lazy(() => import('./quizzes/LoveLanguagesQuiz'));
 const KrafttierQuiz = lazy(() => import('./quizzes/KrafttierQuiz'));
 const PersonalityQuiz = lazy(() => import('./quizzes/PersonalityQuiz'));
+const AuraColorsQuiz = lazy(() => import('./quizzes/AuraColorsQuiz'));
+const BlumenwesenQuiz = lazy(() => import('./quizzes/BlumenwesenQuiz'));
+const EnergiesteinQuiz = lazy(() => import('./quizzes/EnergiesteinQuiz'));
+const CharmeQuiz = lazy(() => import('./quizzes/CharmeQuiz'));
+const EQQuiz = lazy(() => import('./quizzes/EQQuiz'));
+const CareerDNAQuiz = lazy(() => import('./quizzes/CareerDNAQuiz'));
+const SocialRoleQuiz = lazy(() => import('./quizzes/SocialRoleQuiz'));
+const SpotlightQuiz = lazy(() => import('./quizzes/SpotlightQuiz'));
+const DestinyQuiz = lazy(() => import('./quizzes/DestinyQuiz'));
+const RpgIdentityQuiz = lazy(() => import('./quizzes/RpgIdentityQuiz'));
+const PartyQuiz = lazy(() => import('./quizzes/PartyQuiz'));
+const CelebritySoulmateQuiz = lazy(() => import('./quizzes/CelebritySoulmateQuiz'));
 
 // --- Types ---
 interface QuizOverlayProps {
@@ -20,11 +32,23 @@ interface QuizProps {
   onClose: () => void;
 }
 
-// --- Quiz registry ---
+// --- Quiz registry (keyed by moduleId suffix) ---
 const QUIZ_MAP: Record<string, React.LazyExoticComponent<React.ComponentType<QuizProps>>> = {
   love_languages: LoveLanguagesQuiz,
   krafttier: KrafttierQuiz,
   personality: PersonalityQuiz,
+  aura_colors: AuraColorsQuiz,
+  blumenwesen: BlumenwesenQuiz,
+  energiestein: EnergiesteinQuiz,
+  charme: CharmeQuiz,
+  eq: EQQuiz,
+  career_dna: CareerDNAQuiz,
+  social_role: SocialRoleQuiz,
+  spotlight: SpotlightQuiz,
+  destiny: DestinyQuiz,
+  rpg_identity: RpgIdentityQuiz,
+  party_need: PartyQuiz,
+  celebrity_soulmate: CelebritySoulmateQuiz,
 };
 
 // --- Loading fallback ---
@@ -73,6 +97,9 @@ export default function QuizOverlay({ quizId, onComplete, onClose }: QuizOverlay
         >
           {/* Content area — stop click propagation so backdrop click works */}
           <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Quiz"
             className="relative mx-4 max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-gold/10 bg-obsidian p-6 shadow-2xl"
             initial={{ opacity: 0, y: 24, scale: 0.97 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -88,6 +115,7 @@ export default function QuizOverlay({ quizId, onComplete, onClose }: QuizOverlay
               aria-label="Close quiz"
             >
               <svg
+                aria-hidden="true"
                 xmlns="http://www.w3.org/2000/svg"
                 width="20"
                 height="20"

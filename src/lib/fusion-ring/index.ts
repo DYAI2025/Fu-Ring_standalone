@@ -6,3 +6,4 @@ export { wuxingToSectors } from './wuxing';
 export { AFFINITY_MAP, TAG_AFFINITY } from './affinity-map';
 export { resolveMarkerToSectors, eventToSectorSignals, fuseAllEvents } from './test-signal';
 export { computeFusionSignal, type FusionRingSignal } from './signal';
+export { CLUSTER_REGISTRY, findClusterForModule, isClusterComplete, clusterProgress, type ClusterDef } from './clusters';
