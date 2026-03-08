@@ -10,8 +10,9 @@ import { PremiumGate } from "./PremiumGate";
 import { usePremium } from "../hooks/usePremium";
 import { useAuth } from "../contexts/AuthContext";
 import { useLanguage } from "../contexts/LanguageContext";
-import { WUXING_ELEMENTS, getWuxingByKey } from "../lib/astro-data/wuxing";
+import { WUXING_ELEMENTS, getWuxingByKey, getWuxingName } from "../lib/astro-data/wuxing";
 import { getBranchByAnimal } from "../lib/astro-data/earthlyBranches";
+import { getCoinAsset } from "../lib/astro-data/coinAssets";
 import { getZodiacSign, getSignName } from "../lib/astro-data/zodiacSigns";
 import { getConstellationForSign } from "../lib/astro-data/constellationFromSign";
 import { usePlanetarium } from "../contexts/PlanetariumContext";
@@ -302,6 +303,7 @@ export function Dashboard({
   const dayMaster     = apiData.bazi?.day_master          || "—";
   const monthStem     = apiData.bazi?.pillars?.month?.stem || "—";
   const dominantEl    = apiData.wuxing?.dominant_element  || "";
+  const yearElement   = apiData.bazi?.pillars?.year?.element || "";
 
   // Localised sign names (FR-02: no English on DE page)
   const sunSignName  = getSignName(sunSign, lang);
@@ -320,6 +322,7 @@ export function Dashboard({
   const yearBranch     = useMemo(() => getBranchByAnimal(zodiacAnimal), [zodiacAnimal]);
   const yearAnimalName = yearBranch ? yearBranch.animal[lang] : zodiacAnimal;
   const dominantWuxing = useMemo(() => getWuxingByKey(dominantEl), [dominantEl]);
+  const yearCoinSrc    = useMemo(() => getCoinAsset(zodiacAnimal), [zodiacAnimal]);
 
   // WuXing element counts + percentage fix (FR-06 Bug)
   const wuxingCounts: Record<string, number> = useMemo(
@@ -613,29 +616,41 @@ export function Dashboard({
             <div className="morning-card p-5 sm:p-7 flex flex-col justify-between" data-special="true">
               <div>
                 <div className="flex items-center justify-between mb-4">
-                  <span className="text-2xl leading-none">{yearBranch?.emoji || "✨"}</span>
+                  <span className="text-2xl leading-none select-none">{yearBranch?.emoji || "✨"}</span>
                   <Badge text={t("dashboard.bazi.zodiacLabel")} />
                 </div>
-                <h3 className="font-serif text-xl sm:text-2xl text-[#1E2A3A] mb-0.5">
+                <h3 className="font-serif text-xl sm:text-2xl text-[#1E2A3A] leading-tight mb-0.5">
                   {yearAnimalName || "—"}
                 </h3>
                 <p className="text-[9px] uppercase tracking-[0.25em] text-[#8B6914]/50 mb-4">
-                  {t("dashboard.bazi.yearAnimalTitle")}
+                  {yearElement && yearBranch
+                    ? `${getWuxingName(yearElement, lang)}-${yearAnimalName} (${yearBranch.chinese})`
+                    : t("dashboard.bazi.yearAnimalTitle")}
                 </p>
+                {yearCoinSrc && (
+                  <div className="flex justify-center my-4">
+                    <img
+                      src={yearCoinSrc}
+                      alt={yearAnimalName}
+                      className="w-[120px] h-[120px] object-contain rounded-full"
+                      loading="lazy"
+                    />
+                  </div>
+                )}
                 {yearBranch && (
                   <p className="text-xs text-[#1E2A3A]/55 leading-relaxed">
-                    {yearBranch.description[lang].split(".")[0]}.
+                    {yearBranch.description[lang]}
                   </p>
                 )}
               </div>
-              <div className="flex justify-between items-end border-t border-[#8B6914]/10 pt-4 mt-5">
+              <div className="flex justify-between items-center border-t border-[#8B6914]/10 pt-4 mt-5">
                 <div className="flex items-center gap-2">
                   {yearBranch && (
                     <span className="font-serif text-xl text-[#8B6914]">{yearBranch.chinese}</span>
                   )}
                   {yearBranch && (
                     <span className="text-[10px] text-[#1E2A3A]/35">
-                      {yearBranch.branch} · {yearBranch.element}
+                      {yearBranch.element} · {yearBranch.pinyin}
                     </span>
                   )}
                 </div>
@@ -645,43 +660,45 @@ export function Dashboard({
 
             {/* Dominant WuXing Element */}
             <div
-              className="morning-card p-5 sm:p-7 flex flex-col gap-4"
+              className="morning-card p-5 sm:p-7 flex flex-col justify-between"
               style={dominantWuxing ? {
                 borderLeftColor: dominantWuxing.color + "55",
                 borderLeftWidth: "3px",
                 borderLeftStyle: "solid",
               } : undefined}
             >
-              <div className="flex items-center justify-between">
-                <h3 className="font-serif text-lg text-[#1E2A3A]">
-                  {t("dashboard.bazi.dominantElementTitle")}
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-2xl leading-none select-none">{dominantWuxing?.emoji || "✨"}</span>
+                  <Badge text={t("dashboard.bazi.essenceLabel")} />
+                </div>
+                <h3 className="font-serif text-xl sm:text-2xl text-[#1E2A3A] leading-tight mb-0.5">
+                  {dominantWuxing ? dominantWuxing.name[lang] : (dominantEl || "—")}
                 </h3>
-                <Badge text={t("dashboard.bazi.essenceLabel")} />
+                <p className="text-[9px] uppercase tracking-[0.25em] text-[#8B6914]/50 mb-4">
+                  {t("dashboard.bazi.dominantElementTitle")}
+                </p>
+                {dominantWuxing && (
+                  <p className="text-xs text-[#1E2A3A]/55 leading-relaxed">
+                    {dominantWuxing.description[lang]}
+                  </p>
+                )}
               </div>
-
-              {dominantWuxing ? (
-                <>
-                  <div className="flex items-center gap-4">
-                    <span className="text-5xl font-serif leading-none select-none" style={{ color: dominantWuxing.color }}>
+              <div className="flex justify-between items-center border-t border-[#8B6914]/10 pt-4 mt-5">
+                <div className="flex items-center gap-2">
+                  {dominantWuxing && (
+                    <span className="font-serif text-xl leading-none select-none" style={{ color: dominantWuxing.color }}>
                       {dominantWuxing.chinese}
                     </span>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-xl font-serif text-[#1E2A3A]">{dominantWuxing.name[lang]}</div>
-                      <div className="text-[11px] text-[#1E2A3A]/35 tracking-wide mt-0.5">{dominantWuxing.pinyin}</div>
-                    </div>
-                    <span className="text-2xl leading-none select-none shrink-0">{dominantWuxing.emoji}</span>
-                  </div>
-                  <p className="text-xs text-[#1E2A3A]/55 leading-relaxed">
-                    {dominantWuxing.description[lang].split(".")[0]}.
-                  </p>
-                  <div className="grid grid-cols-2 gap-x-4 text-[10px] text-[#1E2A3A]/35 pt-3 border-t border-[#8B6914]/10">
-                    <span>↗ {dominantWuxing.direction[lang]}</span>
-                    <span>◆ {dominantWuxing.season[lang]}</span>
-                  </div>
-                </>
-              ) : (
-                <div className="font-serif text-2xl text-[#1E2A3A]">{dominantEl || "—"}</div>
-              )}
+                  )}
+                  {dominantWuxing && (
+                    <span className="text-[10px] text-[#1E2A3A]/35">
+                      {dominantWuxing.pinyin} · {dominantWuxing.direction[lang]} · {dominantWuxing.season[lang]}
+                    </span>
+                  )}
+                </div>
+                <Badge text="WUXING" />
+              </div>
             </div>
 
             {/* Day Master */}
