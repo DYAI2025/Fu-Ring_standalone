@@ -22,6 +22,11 @@ import { ClusterEnergySystem } from "./ClusterEnergySystem";
 import { LegalFooter } from "./LegalFooter";
 import type { ContributionEvent } from "@/src/lib/lme/types";
 import type { FusionRingSignal } from "@/src/lib/fusion-ring";
+import { BaZiFourPillars } from "./BaZiFourPillars";
+import { WuXingPentagon } from "./WuXingPentagon";
+import { WuXingCycleWheel } from "./WuXingCycleWheel";
+import { BaZiInterpretation } from "./BaZiInterpretation";
+import { BaZiMiniRing } from "./BaZiMiniRing";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Static data
@@ -367,6 +372,24 @@ export function Dashboard({
     () => getConstellationForSign(sunSign)?.key,
     [sunSign],
   );
+
+  // BaZi section computed data
+  const wuxingBalance = useMemo(() => {
+    const raw = apiData.wuxing?.elements || apiData.wuxing?.element_counts || {};
+    const total: number = Object.values(raw).reduce<number>((sum, v) => sum + Number(v), 0);
+    if (total === 0) return {};
+    return Object.fromEntries(
+      Object.entries(raw).map(([k, v]) => [k, Number(v) / total])
+    );
+  }, [apiData.wuxing]);
+
+  const yearAnimal = apiData.bazi?.zodiac_sign || apiData.chinese?.zodiac || "";
+  const yearEl = apiData.bazi?.pillars?.year?.element || "";
+
+  // B(s) signals for mini-ring (from fusion computation)
+  const baziSectorSignals = useMemo(() => {
+    return fusionSignal?.components?.B ?? new Array(12).fill(0);
+  }, [fusionSignal]);
 
   const elevenLabsAgentId =
     import.meta.env.VITE_ELEVENLABS_AGENT_ID || "agent_1801kje0zqc8e4b89swbt7wekawv";
@@ -730,112 +753,127 @@ export function Dashboard({
         </div>
       </motion.div>
 
-      {/* ═══ BAZI FOUR PILLARS (FR-05: Tooltips) — PREMIUM ══════════ */}
-      {apiData.bazi?.pillars && (
-        <PremiumGate teaser={t("dashboard.premium.teaserPillars")}>
-          <motion.div className="mb-10" {...fadeIn(0.3)}>
-            <SectionDivider label="BaZi 八字" title={t("dashboard.pillars.sectionTitle")} />
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              {Object.entries(apiData.bazi.pillars).map(([key, val]: [string, any]) => {
-                const pk = PILLAR_KEYS[key];
-                return (
-                  // Wrapper is overflow-visible so tooltip escapes morning-stele's overflow:hidden
-                  <div key={key} className="relative overflow-visible">
-                    <Tooltip content={pk ? t(pk.desc) : ""} wide dark={planetariumMode}>
-                      <div className="morning-stele group cursor-help w-full">
-                        <div className="text-[8px] uppercase tracking-[0.3em] text-[#8B6914]/55 mb-5 group-hover:text-[#8B6914] transition-colors">
-                          {pk ? t(pk.label) : key}
-                        </div>
-                        <div className="font-serif text-2xl mb-1 text-[#1E2A3A]">{val.stem || "—"}</div>
-                        <div className="text-[10px] text-[#1E2A3A]/35 uppercase tracking-widest">{val.branch || ""}</div>
-                        {val.animal && (
-                          <div className="text-[9px] text-[#8B6914]/45 mt-1.5 tracking-wide">{val.animal}</div>
-                        )}
-                        {/* Subtle tooltip hint */}
-                        <div className="mt-3 text-[8px] text-[#8B6914]/30 tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
-                          ↑ Info
-                        </div>
-                      </div>
-                    </Tooltip>
-                  </div>
-                );
-              })}
-            </div>
-          </motion.div>
-        </PremiumGate>
-      )}
+      {/* ═══ BAZI & WUXING DEEP SECTION ═══════════════════════════════ */}
+      <PremiumGate teaser={t("dashboard.premium.teaserPillars")}>
+        <motion.div className="mb-12" {...fadeIn(0.3)}>
+          {/* Block A: Header */}
+          <SectionDivider
+            label={lang === "de" ? "Chinesische Astrologie" : "Chinese Astrology"}
+            title={lang === "de" ? "BaZi & WuXing — Vier Säulen des Schicksals" : "BaZi & WuXing — Four Pillars of Destiny"}
+          />
 
-      {/* ═══ WUXING BALANCE (FR-06: % fix + hover tooltips) — PREMIUM ═ */}
-      <PremiumGate teaser={t("dashboard.premium.teaserWuxing")}>
-        <motion.div className="mb-10" {...fadeIn(0.35)}>
-          <SectionDivider label="WuXing 五行" title={t("dashboard.wuxing.sectionTitle")} />
-          <p className="text-xs text-[#1E2A3A]/45 mb-6 leading-relaxed max-w-2xl">
-            {t("dashboard.wuxing.sectionDesc")}
-          </p>
-
-          <div className="morning-card p-6 md:p-8">
-            <div className="space-y-4">
-              {WUXING_ELEMENTS.map((el) => {
-                const count  = Number(wuxingCounts[el.key] ?? wuxingCounts[el.name.de] ?? 0);
-                // FR-06 Bug fix: true percentage of total (sums to 100%)
-                const pctLabel = totalCount > 0 ? Math.round((count / totalCount) * 100) : 0;
-                // Bar visual: scaled to max so dominant bar is always prominent
-                const pctBar   = hasWuxingData ? (count / maxCount) * 100 : 0;
-                const isDom    = el.key === dominantEl || el.name.de === dominantEl;
-
-                return (
-                  <Tooltip key={el.key} content={el.description[lang]} wide dark={planetariumMode}>
-                    <div className="flex items-center gap-2 sm:gap-4 cursor-help group">
-                      {/* Identity */}
-                      <div className="w-24 sm:w-28 md:w-36 shrink-0 flex items-center gap-2 sm:gap-2.5">
-                        <span className="text-2xl font-serif leading-none select-none" style={{ color: el.color }}>
-                          {el.chinese}
-                        </span>
-                        <div className="min-w-0">
-                          <div className="text-xs font-medium text-[#1E2A3A] truncate group-hover:text-[#1E2A3A]/80 transition-colors">
-                            {el.name[lang]}
-                          </div>
-                          <div className="text-[10px] text-[#1E2A3A]/35">{el.pinyin}</div>
-                        </div>
-                      </div>
-
-                      {/* Bar */}
-                      <div className="flex-1 wuxing-bar-track">
-                        {hasWuxingData ? (
-                          <motion.div
-                            className="wuxing-bar-fill"
-                            initial={{ width: 0 }}
-                            animate={{ width: `${Math.max(pctBar, pctBar > 0 ? 2 : 0)}%` }}
-                            transition={{ duration: 1.0, ease: "easeOut", delay: 0.2 }}
-                            style={{ backgroundColor: el.color }}
-                          />
-                        ) : (
-                          <div className="h-full rounded-full" style={{ backgroundColor: el.color + "20", width: "100%" }} />
-                        )}
-                      </div>
-
-                      {/* Label: correct % of total (FR-06 fix) + dominant star */}
-                      <div className="w-12 shrink-0 text-right flex items-center justify-end gap-1">
-                        {hasWuxingData && pctLabel > 0 && (
-                          <span className="text-[10px] text-[#1E2A3A]/45 font-mono">{pctLabel}%</span>
-                        )}
-                        {isDom && (
-                          <span className="text-sm" style={{ color: el.color }}>★</span>
-                        )}
-                      </div>
-                    </div>
-                  </Tooltip>
-                );
-              })}
-            </div>
-
-            {!hasWuxingData && (
-              <p className="mt-5 text-[10px] text-[#1E2A3A]/35 italic text-center">
-                {lang === "de"
-                  ? "Elementgewichtung wird bei Verfügbarkeit der API-Daten angezeigt. Hover für Details."
-                  : "Element weighting shown when API data is available. Hover for details."}
+          {/* Block B: Four Pillars */}
+          {apiData.bazi?.pillars && (
+            <div className="mb-10">
+              <p className="text-[9px] uppercase tracking-[0.3em] text-[#8B6914]/50 mb-4">
+                {lang === "de" ? "Die Vier Säulen" : "The Four Pillars"}
               </p>
-            )}
+              <BaZiFourPillars
+                pillars={apiData.bazi.pillars}
+                lang={lang}
+                planetariumMode={planetariumMode}
+              />
+            </div>
+          )}
+
+          {/* Block C: Element Balance — Pentagon + Cycle side by side */}
+          <div className="mb-10">
+            <p className="text-[9px] uppercase tracking-[0.3em] text-[#8B6914]/50 mb-2">
+              WuXing 五行
+            </p>
+            <p className="text-xs text-[#1E2A3A]/45 mb-6 leading-relaxed max-w-2xl">
+              {t("dashboard.wuxing.sectionDesc")}
+            </p>
+
+            <div className="morning-card p-6 md:p-8">
+              {Object.keys(wuxingBalance).length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+                  <div className="max-w-[280px] mx-auto md:max-w-none">
+                    <WuXingPentagon
+                      balance={wuxingBalance}
+                      lang={lang}
+                      planetariumMode={planetariumMode}
+                    />
+                  </div>
+                  <div className="max-w-[240px] mx-auto md:max-w-none">
+                    <WuXingCycleWheel
+                      balance={wuxingBalance}
+                      lang={lang}
+                      planetariumMode={planetariumMode}
+                    />
+                  </div>
+                </div>
+              ) : (
+                /* Fallback: existing bar chart when no WuXing data */
+                <div className="space-y-4">
+                  {WUXING_ELEMENTS.map((el) => {
+                    const count = Number(wuxingCounts[el.key] ?? wuxingCounts[el.name.de] ?? 0);
+                    const pctLabel = totalCount > 0 ? Math.round((count / totalCount) * 100) : 0;
+                    const pctBar = hasWuxingData ? (count / maxCount) * 100 : 0;
+                    const isDom = el.key === dominantEl || el.name.de === dominantEl;
+                    return (
+                      <Tooltip key={el.key} content={el.description[lang]} wide dark={planetariumMode}>
+                        <div className="flex items-center gap-2 sm:gap-4 cursor-help group">
+                          <div className="w-24 sm:w-28 md:w-36 shrink-0 flex items-center gap-2 sm:gap-2.5">
+                            <span className="text-2xl font-serif leading-none select-none" style={{ color: el.color }}>
+                              {el.chinese}
+                            </span>
+                            <div className="min-w-0">
+                              <div className="text-xs font-medium text-[#1E2A3A] truncate">{el.name[lang]}</div>
+                              <div className="text-[10px] text-[#1E2A3A]/35">{el.pinyin}</div>
+                            </div>
+                          </div>
+                          <div className="flex-1 wuxing-bar-track">
+                            {hasWuxingData ? (
+                              <motion.div
+                                className="wuxing-bar-fill"
+                                initial={{ width: 0 }}
+                                animate={{ width: `${Math.max(pctBar, pctBar > 0 ? 2 : 0)}%` }}
+                                transition={{ duration: 1.0, ease: "easeOut", delay: 0.2 }}
+                                style={{ backgroundColor: el.color }}
+                              />
+                            ) : (
+                              <div className="h-full rounded-full" style={{ backgroundColor: el.color + "20", width: "100%" }} />
+                            )}
+                          </div>
+                          <div className="w-12 shrink-0 text-right flex items-center justify-end gap-1">
+                            {hasWuxingData && pctLabel > 0 && (
+                              <span className="text-[10px] text-[#1E2A3A]/45 font-mono">{pctLabel}%</span>
+                            )}
+                            {isDom && <span className="text-sm" style={{ color: el.color }}>★</span>}
+                          </div>
+                        </div>
+                      </Tooltip>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Block D: Interpretation + Ring Connector */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Interpretation — 2/3 width */}
+            <div className="morning-card p-6 md:p-8 md:col-span-2">
+              <BaZiInterpretation
+                animal={yearAnimal}
+                element={yearEl}
+                balance={wuxingBalance}
+                lang={lang}
+              />
+            </div>
+
+            {/* Mini-Ring Connector — 1/3 width */}
+            <div className="morning-card p-6 flex flex-col items-center justify-center">
+              <p className="text-[9px] uppercase tracking-[0.3em] text-[#8B6914]/50 mb-4">
+                {lang === "de" ? "BaZi im Ring" : "BaZi in Ring"}
+              </p>
+              <BaZiMiniRing
+                baziSignals={baziSectorSignals}
+                lang={lang}
+                size={180}
+              />
+            </div>
           </div>
         </motion.div>
       </PremiumGate>
