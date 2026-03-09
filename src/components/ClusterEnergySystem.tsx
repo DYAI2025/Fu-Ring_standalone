@@ -1,4 +1,4 @@
-import { FusionRing } from './FusionRing';
+import FusionRing from './FusionRing';
 import { ClusterCard } from './ClusterCard';
 import { CLUSTER_REGISTRY } from '@/src/lib/fusion-ring/clusters';
 import type { FusionRingSignal } from '@/src/lib/fusion-ring';

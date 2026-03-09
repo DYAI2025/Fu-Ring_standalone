@@ -19,6 +19,7 @@ import { usePlanetarium } from "../contexts/PlanetariumContext";
 import { Tooltip } from "./Tooltip";
 import QuizOverlay from "./QuizOverlay";
 import { ClusterEnergySystem } from "./ClusterEnergySystem";
+import FusionRingTimeline from "./FusionRingTimeline";
 import { LegalFooter } from "./LegalFooter";
 import type { ContributionEvent } from "@/src/lib/lme/types";
 import type { FusionRingSignal } from "@/src/lib/fusion-ring";
@@ -1067,6 +1068,23 @@ export function Dashboard({
             isPremium={isPremium}
             lang={lang}
           />
+        </motion.div>
+      )}
+
+      {/* ═══ TAGESENERGIE — Transit Timeline ════════════════════════════ */}
+      {fusionSignal && (
+        <motion.div className="mb-16 px-4" {...fadeIn(0.4)}>
+          <div className="mb-4">
+            <p className="text-xs font-medium uppercase tracking-widest text-gold/60 mb-1">
+              {lang === "de" ? "Tagesenergie" : "Daily Energy"}
+            </p>
+            <h2 className="text-xl font-light text-white/80">
+              {lang === "de" ? "Planetare Transitenergie" : "Planetary Transit Energy"}
+            </h2>
+          </div>
+          <div className="flex justify-center">
+            <FusionRingTimeline signal={fusionSignal} size={420} />
+          </div>
         </motion.div>
       )}
 
