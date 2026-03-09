@@ -748,19 +748,19 @@ h1, h2, h3 { letter-spacing: 0.1em; }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   ENTER SCREEN — cinematic reveal after intro video
+   ENTER SCREEN — ephemeris scroll reveal after intro video
    ═══════════════════════════════════════════════════════════════════════════ */
 
 .enter-screen {
   overflow: hidden;
+  background: #020617;
 }
 
-/* Deep space background */
+/* Parchment-toned ambient glow behind scroll */
 .enter-bg {
   background:
-    radial-gradient(ellipse at 50% 35%, rgba(99,102,241,0.04) 0%, transparent 60%),
-    radial-gradient(ellipse at 30% 70%, rgba(212,175,55,0.02) 0%, transparent 50%),
-    radial-gradient(circle at 50% 50%, #050b1a 0%, #020617 100%);
+    radial-gradient(ellipse at 50% 40%, rgba(212,175,55,0.04) 0%, transparent 55%),
+    radial-gradient(circle at 50% 50%, #08102a 0%, #020617 100%);
 }
 
 /* Film-grain noise */
@@ -770,12 +770,57 @@ h1, h2, h3 { letter-spacing: 0.1em; }
   z-index: 5;
 }
 
-/* Title with subtle text gradient */
+/* Ephemeris scroll container */
+.enter-scroll-wrap {
+  position: relative;
+  width: clamp(260px, 50vw, 480px);
+  aspect-ratio: 0.7;
+  overflow: hidden;
+  border-radius: 4px;
+  box-shadow:
+    0 0 80px 20px rgba(212,175,55,0.06),
+    0 40px 100px rgba(0,0,0,0.5);
+}
+
+/* Scroll unroll animation: clip from center outward */
+.enter-scroll-unroll {
+  clip-path: inset(50% 0);
+  transition: clip-path 3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.enter-scroll-unroll.unrolled {
+  clip-path: inset(0% 0);
+}
+
+/* Ephemeris image styling */
+.enter-ephemeris {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: sepia(0.15) brightness(0.85) contrast(1.1);
+  transition: filter 4s ease;
+}
+
+.enter-scroll-unroll.unrolled .enter-ephemeris {
+  filter: sepia(0.08) brightness(0.9) contrast(1.05);
+}
+
+/* Overlay gradient on ephemeris for text readability */
+.enter-scroll-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(2,6,23,0.7) 0%, transparent 30%, transparent 70%, rgba(2,6,23,0.8) 100%),
+    radial-gradient(ellipse at 50% 50%, transparent 30%, rgba(2,6,23,0.3) 100%);
+  pointer-events: none;
+}
+
+/* Title with gold gradient */
 .enter-title {
   background: linear-gradient(
     180deg,
-    rgba(255,255,255,0.95) 0%,
-    rgba(212,175,55,0.7) 100%
+    rgba(240,208,96,0.95) 0%,
+    rgba(212,175,55,0.8) 100%
   );
   background-clip: text;
   -webkit-background-clip: text;
@@ -783,14 +828,14 @@ h1, h2, h3 { letter-spacing: 0.1em; }
   text-shadow: none;
 }
 
-/* Enter button glow effect on hover */
+/* Enter button glow on hover */
 .enter-btn-glow {
   background:
-    radial-gradient(ellipse at center, rgba(99,102,241,0.08) 0%, transparent 70%);
+    radial-gradient(ellipse at center, rgba(212,175,55,0.1) 0%, transparent 70%);
   pointer-events: none;
 }
 
-/* Enter button subtle border animation */
+/* Enter button border shimmer */
 .enter-btn {
   position: relative;
 }
@@ -801,9 +846,9 @@ h1, h2, h3 { letter-spacing: 0.1em; }
   inset: -1px;
   background: linear-gradient(
     135deg,
-    rgba(212,175,55,0.15) 0%,
-    rgba(99,102,241,0.1) 50%,
-    rgba(212,175,55,0.15) 100%
+    rgba(212,175,55,0.2) 0%,
+    rgba(240,208,96,0.1) 50%,
+    rgba(212,175,55,0.2) 100%
   );
   opacity: 0;
   transition: opacity 0.7s ease;
@@ -813,6 +858,20 @@ h1, h2, h3 { letter-spacing: 0.1em; }
 .enter-btn:hover::before {
   opacity: 1;
 }
+
+/* Scroll rod decorations (top and bottom) */
+.enter-scroll-rod {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: linear-gradient(90deg, rgba(212,175,55,0.3) 0%, rgba(212,175,55,0.6) 50%, rgba(212,175,55,0.3) 100%);
+  z-index: 10;
+  box-shadow: 0 0 12px rgba(212,175,55,0.2);
+}
+
+.enter-scroll-rod--top { top: 0; border-radius: 3px 3px 0 0; }
+.enter-scroll-rod--bottom { bottom: 0; border-radius: 0 0 3px 3px; }
 
 /* ── Reduced Motion ──────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {

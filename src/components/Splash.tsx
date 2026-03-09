@@ -269,7 +269,7 @@ export function Splash({ onEnter, onLanguageSelect }: SplashProps) {
         </motion.button>
       )}
 
-      {/* ── ENTER SCREEN — cinematic reveal after video ── */}
+      {/* ── ENTER SCREEN — ephemeris scroll reveal after video ── */}
       <div
         className={`enter-screen absolute inset-0 z-20 transition-opacity duration-[3000ms] ${
           phase === "animation" || videoFading ? "opacity-100" : "opacity-0 pointer-events-none"
@@ -281,124 +281,59 @@ export function Splash({ onEnter, onLanguageSelect }: SplashProps) {
         {/* Noise texture */}
         <div className="absolute inset-0 enter-noise pointer-events-none" />
 
-        {/* Star Atlas — fades in at stage 2 */}
-        <div
-          className={`absolute inset-0 transition-opacity duration-[4000ms] ease-in-out ${
-            stage >= 2 ? "opacity-30" : "opacity-0"
-          }`}
-        >
-          <img
-            src="https://r2-bucket.flowith.net/f/77e7a2286de210ee/nocturne_atlas_star_map_index_1%404096x2286.jpeg"
-            alt=""
-            className="w-full h-full object-cover scale-110 blur-[2px] brightness-[0.4]"
-          />
-        </div>
-
-        {/* Nebula glow — mouse-reactive ambient light */}
-        <div
-          className={`absolute transition-opacity duration-[3000ms] ${
-            stage >= 1 ? "opacity-100" : "opacity-0"
-          }`}
-          style={{
-            top: "30%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            width: "800px",
-            height: "800px",
-            background: "radial-gradient(circle, rgba(99,102,241,0.08) 0%, rgba(129,140,248,0.02) 40%, transparent 70%)",
-            filter: "blur(80px)",
-            mixBlendMode: "screen",
-            pointerEvents: "none",
-          }}
-        />
-
-        {/* Starfield particles */}
+        {/* Sparse twinkling starfield */}
         <EnterStarfield active={stage >= 1} />
 
-        {/* Particle canvas */}
+        {/* Subtle gold particle canvas */}
         <EnterParticles active={stage >= 1} />
 
         {/* ── Central composition ── */}
         <div className="absolute inset-0 flex flex-col items-center justify-center">
 
-          {/* Synthesis orb — glowing core */}
-          <div className="relative flex items-center justify-center">
-            {/* Outer ring pulse */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={
-                stage >= 1
-                  ? { opacity: [0, 0.15, 0.05], scale: [0.8, 1.2, 1] }
-                  : {}
-              }
-              transition={{ duration: 4, ease: "easeInOut" }}
-              className="absolute w-48 h-48 md:w-64 md:h-64 rounded-full border border-white/[0.06]"
-              style={{
-                boxShadow: stage >= 1
-                  ? "0 0 80px 20px rgba(99,102,241,0.06), inset 0 0 60px rgba(212,175,55,0.04)"
-                  : "none",
-              }}
-            />
+          {/* ── Ephemeris Scroll ── */}
+          <div className="relative flex flex-col items-center">
 
-            {/* Inner singularity */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0 }}
-              animate={
-                stage === 1
-                  ? { opacity: 1, scale: 1, boxShadow: "0 0 40px 8px rgba(255,255,255,0.6)" }
-                  : stage >= 2
-                  ? { opacity: 0.02, scale: 80, boxShadow: "0 0 60px 12px rgba(255,255,255,0.3)" }
-                  : {}
-              }
-              transition={{ duration: stage === 1 ? 2.5 : 4, ease: "easeInOut" }}
-              className="w-1.5 h-1.5 bg-white rounded-full"
-            />
-
-            {/* Cross beams */}
-            <motion.div
-              initial={{ opacity: 0, scaleY: 0 }}
-              animate={stage >= 2 ? { opacity: 0.12, scaleY: 1 } : {}}
-              transition={{ duration: 3, ease: "easeOut" }}
-              className="absolute w-px h-[50vh] bg-gradient-to-b from-transparent via-white/20 to-transparent blur-sm"
-            />
-            <motion.div
-              initial={{ opacity: 0, scaleX: 0 }}
-              animate={stage >= 2 ? { opacity: 0.08, scaleX: 1 } : {}}
-              transition={{ duration: 3, delay: 0.3, ease: "easeOut" }}
-              className="absolute h-px w-[50vw] bg-gradient-to-r from-transparent via-white/15 to-transparent blur-sm"
-            />
-
-            {/* Diagonal rays */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.5 }}
-              animate={stage >= 2 ? { opacity: 0.1, scale: 1.5 } : {}}
-              transition={{ duration: 4 }}
-              className="absolute w-px h-80 bg-white/10 blur-xl rotate-45 origin-center"
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.5 }}
-              animate={stage >= 2 ? { opacity: 0.1, scale: 1.5 } : {}}
-              transition={{ duration: 4, delay: 0.2 }}
-              className="absolute w-px h-80 bg-white/10 blur-xl -rotate-45 origin-center"
-            />
-          </div>
-
-          {/* ── Title block ── */}
-          <div className="mt-16 md:mt-24 text-center z-10 px-6">
+            {/* Subtitle above scroll */}
             <motion.p
               initial={{ opacity: 0, letterSpacing: "0.2em" }}
-              animate={stage >= 3 ? { opacity: 0.5, letterSpacing: "0.8em" } : {}}
+              animate={stage >= 2 ? { opacity: 0.6, letterSpacing: "0.6em" } : {}}
               transition={{ duration: 3 }}
-              className="font-sans text-[8px] md:text-[9px] uppercase text-white/40 mb-6 md:mb-8"
+              className="font-sans text-[8px] md:text-[10px] uppercase text-[#d4af37]/50 mb-6 md:mb-8 z-10"
             >
-              Fusioned Firmament
+              Fusion Firmaments
             </motion.p>
 
+            {/* Scroll container with unroll animation */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={stage >= 1 ? { opacity: 1, scale: 1 } : {}}
+              transition={{ duration: 2.5, ease: "easeOut" }}
+            >
+              <div className={`enter-scroll-wrap enter-scroll-unroll ${stage >= 2 ? "unrolled" : ""}`}>
+                {/* Top scroll rod */}
+                <div className="enter-scroll-rod enter-scroll-rod--top" />
+
+                {/* Ephemeris image */}
+                <img
+                  src="/ephemeris.jpg"
+                  alt="Ephemeris — celestial star chart"
+                  className="enter-ephemeris"
+                />
+
+                {/* Overlay for text readability */}
+                <div className="enter-scroll-overlay" />
+
+                {/* Bottom scroll rod */}
+                <div className="enter-scroll-rod enter-scroll-rod--bottom" />
+              </div>
+            </motion.div>
+
+            {/* Title below scroll */}
             <motion.h1
-              initial={{ opacity: 0, y: 40 }}
+              initial={{ opacity: 0, y: 30 }}
               animate={stage >= 3 ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 2.5, ease: [0.16, 1, 0.3, 1] }}
-              className="enter-title font-landing-display text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-4 md:mb-6"
+              className="enter-title font-landing-display text-3xl md:text-5xl lg:text-6xl font-bold tracking-tight mt-8 md:mt-12 mb-2 z-10"
             >
               Bazodiac
             </motion.h1>
@@ -406,12 +341,10 @@ export function Splash({ onEnter, onLanguageSelect }: SplashProps) {
             <motion.p
               initial={{ opacity: 0 }}
               animate={stage >= 3 ? { opacity: 1 } : {}}
-              transition={{ duration: 2, delay: 0.8 }}
-              className="font-serif text-sm md:text-lg tracking-[0.15em] md:tracking-[0.25em] text-white/50 max-w-md mx-auto leading-relaxed"
+              transition={{ duration: 2, delay: 0.6 }}
+              className="font-serif text-xs md:text-sm tracking-[0.2em] md:tracking-[0.3em] text-[#d4af37]/40 z-10"
             >
               Coniunctio Caelorum
-              <br />
-              <span className="text-white/30 text-xs md:text-sm">Occidentalis et Orientalis</span>
             </motion.p>
           </div>
 
@@ -420,21 +353,21 @@ export function Splash({ onEnter, onLanguageSelect }: SplashProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={stage >= 4 ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 1.5, ease: "easeOut" }}
-            className="absolute bottom-16 md:bottom-24 text-center"
+            className="absolute bottom-12 md:bottom-20 text-center z-10"
           >
             <button
               onClick={onEnter}
-              className="enter-btn group relative px-14 py-5 border border-white/[0.12] text-white/80 font-sans text-[10px] tracking-[0.5em] uppercase backdrop-blur-md transition-all duration-700 hover:border-white/25 hover:text-white cursor-pointer"
+              className="enter-btn group relative px-14 py-5 border border-[#d4af37]/15 text-[#d4af37]/70 font-sans text-[10px] tracking-[0.5em] uppercase backdrop-blur-md transition-all duration-700 hover:border-[#d4af37]/35 hover:text-[#d4af37] cursor-pointer"
             >
               <span className="relative z-10">Enter</span>
-              <div className="absolute inset-0 bg-white/[0.03] opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+              <div className="absolute inset-0 bg-[#d4af37]/[0.03] opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
               <div className="absolute inset-0 enter-btn-glow opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
             </button>
             <motion.p
               initial={{ opacity: 0 }}
               animate={stage >= 4 ? { opacity: 1 } : {}}
               transition={{ duration: 1, delay: 0.8 }}
-              className="mt-5 text-[8px] text-white/20 tracking-[0.4em] uppercase"
+              className="mt-4 text-[8px] text-[#d4af37]/20 tracking-[0.4em] uppercase"
             >
               Awaken the cosmos
             </motion.p>
@@ -442,7 +375,7 @@ export function Splash({ onEnter, onLanguageSelect }: SplashProps) {
         </div>
 
         {/* Bottom gradient fade */}
-        <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-[#020617] to-transparent pointer-events-none" />
+        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#020617] to-transparent pointer-events-none" />
       </div>
     </div>
   );
