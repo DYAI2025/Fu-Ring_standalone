@@ -5,10 +5,49 @@ import crypto from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { createClient } from "@supabase/supabase-js";
 import Stripe from "stripe";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const app = express();
+
+// ── Security Headers ─────────────────────────────────────────────────
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://maps.googleapis.com", "https://elevenlabs.io"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "blob:", "https:"],
+      connectSrc: ["'self'", "https://*.supabase.co", "https://generativelanguage.googleapis.com", "https://bafe-production.up.railway.app", "https://bafe.vercel.app", "https://maps.googleapis.com", "https://elevenlabs.io", "wss://elevenlabs.io"],
+      frameSrc: ["'self'", "https://elevenlabs.io", "https://checkout.stripe.com"],
+      objectSrc: ["'none'"],
+      baseUri: ["'self'"],
+    },
+  },
+  crossOriginEmbedderPolicy: false, // needed for external resources
+}));
+
+// ── Rate Limiting ────────────────────────────────────────────────────
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 min
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many requests, please try again later." },
+});
+app.use("/api/", apiLimiter);
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10, // strict limit on auth-adjacent endpoints
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many attempts, please try again later." },
+});
+app.use("/api/checkout", authLimiter);
 
 const distPath = path.join(__dirname, "dist");
 
@@ -185,7 +224,11 @@ app.post("/api/webhook/chart", express.json(), (req, res) => {
 });
 
 // ── Diagnostic: probe BAFE to discover available routes ─────────────
+// Only available in development — never expose internal URLs in production.
 app.get("/api/debug-bafe", async (_req, res) => {
+  if (process.env.NODE_ENV === "production") {
+    return res.status(404).json({ error: "Not found" });
+  }
   const baseUrl = BAFE_PUBLIC_URL;
   const probes = [
     { label: "root /", method: "GET", url: `${baseUrl}/` },
@@ -256,7 +299,8 @@ app.get("/api/profile/:userId", async (req, res) => {
   const authHeader = req.headers.authorization || "";
   const token = authHeader.replace("Bearer ", "").trim();
 
-  console.log(`[profile] auth check — received: "${token.slice(0, 12)}…" expected: "${(ELEVENLABS_TOOL_SECRET || "").slice(0, 12)}…" match: ${token === ELEVENLABS_TOOL_SECRET}`);
+  // Log auth outcome only, never token values
+  console.log(`[profile] auth check — match: ${!!ELEVENLABS_TOOL_SECRET && token === ELEVENLABS_TOOL_SECRET}`);
 
   if (!ELEVENLABS_TOOL_SECRET || token !== ELEVENLABS_TOOL_SECRET) {
     return res.status(401).json({ error: "Unauthorized" });
@@ -388,6 +432,16 @@ app.post("/api/agent/conversation", express.json(), async (req, res) => {
   res.json({ status: "saved" });
 });
 
+// ── Helper: verify Supabase JWT from Authorization header ───────────
+async function verifySupabaseUser(req) {
+  const authHeader = req.headers.authorization || "";
+  const jwt = authHeader.replace("Bearer ", "").trim();
+  if (!jwt || !supabaseServer) return null;
+  const { data: { user }, error } = await supabaseServer.auth.getUser(jwt);
+  if (error || !user) return null;
+  return user;
+}
+
 // ── Stripe: Create Checkout Session ──────────────────────────────────
 // Reuses existing Stripe customer if one exists in profiles.stripe_customer_id,
 // otherwise creates a new customer and saves the ID immediately.
@@ -395,8 +449,12 @@ app.post("/api/checkout", express.json(), async (req, res) => {
   if (!stripe) return res.status(503).json({ error: "Payment not configured" });
   if (!supabaseServer) return res.status(500).json({ error: "Database not configured" });
 
-  const { userId, userEmail } = req.body;
-  if (!userId) return res.status(400).json({ error: "userId required" });
+  // Verify the caller is the authenticated user
+  const authedUser = await verifySupabaseUser(req);
+  if (!authedUser) return res.status(401).json({ error: "Unauthorized" });
+
+  const userId = authedUser.id;
+  const userEmail = authedUser.email || req.body.userEmail;
 
   try {
     // Look up existing Stripe customer ID from DB
@@ -426,8 +484,8 @@ app.post("/api/checkout", express.json(), async (req, res) => {
       customer: customerId,
       line_items: [{ price: process.env.STRIPE_PRICE_ID, quantity: 1 }],
       mode: "payment",
-      success_url: `${process.env.APP_URL || req.headers.origin}?upgrade=success`,
-      cancel_url: `${process.env.APP_URL || req.headers.origin}?upgrade=cancelled`,
+      success_url: `${process.env.APP_URL || "https://bazodiac.com"}?upgrade=success`,
+      cancel_url: `${process.env.APP_URL || "https://bazodiac.com"}?upgrade=cancelled`,
       metadata: { userId },
     });
     res.json({ url: session.url });
@@ -475,8 +533,10 @@ app.post("/api/webhook/stripe", express.raw({ type: "application/json" }), async
 
 // ── Share URL ────────────────────────────────────────────────────────
 app.post("/api/share", express.json(), async (req, res) => {
-  const { userId } = req.body;
-  if (!userId) return res.status(400).json({ error: "userId required" });
+  const authedUser = await verifySupabaseUser(req);
+  if (!authedUser) return res.status(401).json({ error: "Unauthorized" });
+
+  const userId = authedUser.id;
 
   if (!supabaseServer) {
     return res.status(500).json({ error: "Supabase not configured on server" });
@@ -493,7 +553,7 @@ app.post("/api/share", express.json(), async (req, res) => {
   if (!profile) return res.status(404).json({ error: "No profile found" });
 
   res.json({
-    shareUrl: `${process.env.APP_URL || req.headers.origin}/share/${hash}`,
+    shareUrl: `${process.env.APP_URL || "https://bazodiac.com"}/share/${hash}`,
     hash,
     profile: {
       sun_sign: profile.sun_sign,

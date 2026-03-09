@@ -1,9 +1,10 @@
-export async function getShareUrl(userId: string): Promise<string | null> {
+import { authedFetch } from "@/src/lib/authedFetch";
+
+export async function getShareUrl(_userId: string): Promise<string | null> {
   try {
-    const res = await fetch('/api/share', {
+    const res = await authedFetch('/api/share', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId }),
     });
     const { shareUrl } = await res.json();
     return shareUrl;

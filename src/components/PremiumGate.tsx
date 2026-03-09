@@ -3,6 +3,7 @@ import { usePremium } from "@/src/hooks/usePremium";
 import { useAuth } from "@/src/contexts/AuthContext";
 import { useLanguage } from "@/src/contexts/LanguageContext";
 import { trackEvent } from "@/src/lib/analytics";
+import { authedFetch } from "@/src/lib/authedFetch";
 
 interface Props {
   children: React.ReactNode;
@@ -24,10 +25,9 @@ export function PremiumGate({ children, teaser, ctaLabel }: Props) {
     trackEvent('upgrade_clicked');
     setIsRedirecting(true);
     try {
-      const res = await fetch("/api/checkout", {
+      const res = await authedFetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user?.id, userEmail: user?.email }),
       });
       const { url } = await res.json();
       if (url) window.location.href = url;

@@ -247,10 +247,9 @@ export function Dashboard({
   const handleLeviUpgrade = async () => {
     setLeviUpgrading(true);
     try {
-      const res = await fetch("/api/checkout", {
+      const res = await (await import("@/src/lib/authedFetch")).authedFetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user?.id, userEmail: user?.email }),
       });
       const { url } = await res.json();
       if (url) window.location.href = url;
