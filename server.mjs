@@ -13,6 +13,22 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const app = express();
 
+// ── Boot-time env var validation ─────────────────────────────────────
+const REQUIRED_ENV_VARS = ['GEMINI_API_KEY', 'SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY'];
+const missing = REQUIRED_ENV_VARS.filter(v => !process.env[v]);
+if (missing.length > 0) {
+  console.error(`[server] Missing required environment variables: ${missing.join(', ')}`);
+  console.error('[server] Copy .env.example to .env and fill in the required values.');
+  process.exit(1);
+}
+
+const OPTIONAL_ENV_VARS = ['ELEVENLABS_TOOL_SECRET'];
+for (const v of OPTIONAL_ENV_VARS) {
+  if (!process.env[v]) {
+    console.warn(`[server] Optional env var not set: ${v} (some features may be degraded)`);
+  }
+}
+
 // ── Gemini client (server-side only — key never reaches browser) ──────
 const geminiClient = process.env.GEMINI_API_KEY
   ? new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
