@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
-  Sun, Moon, ArrowUp, ArrowLeft, RefreshCw, Zap, Phone, PhoneOff, Lock,
+  ArrowUp, ArrowLeft, RefreshCw, Zap, Phone, PhoneOff, Lock,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { BirthChartOrrery } from "./BirthChartOrrery";
@@ -28,6 +28,7 @@ import { WuXingPentagon } from "./WuXingPentagon";
 import { WuXingCycleWheel } from "./WuXingCycleWheel";
 import { BaZiInterpretation } from "./BaZiInterpretation";
 import { BaZiMiniRing } from "./BaZiMiniRing";
+import { getStemByCharacter } from "../lib/astro-data/heavenlyStems";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Static data
@@ -307,6 +308,9 @@ export function Dashboard({
   const zodiacAnimal  = apiData.bazi?.zodiac_sign         || apiData.chinese?.zodiac || "";
   const dayMaster     = apiData.bazi?.day_master          || "—";
   const monthStem     = apiData.bazi?.pillars?.month?.stem || "—";
+
+  const dayMasterStem = useMemo(() => getStemByCharacter(dayMaster), [dayMaster]);
+  const monthStemData = useMemo(() => getStemByCharacter(monthStem), [monthStem]);
   const dominantEl    = apiData.wuxing?.dominant_element  || "";
   const yearElement   = apiData.bazi?.pillars?.year?.element || "";
 
@@ -526,7 +530,7 @@ export function Dashboard({
                     animate={{ rotate: 360 }}
                     transition={{ duration: 22, repeat: Infinity, ease: "linear" }}
                   >
-                    <Sun className="text-[#C8930A] w-5 h-5" />
+                    <img src="/icons/sun-sign.png" alt="" className="w-7 h-7 opacity-80" />
                   </motion.div>
                   <Badge text={t("dashboard.western.sunLabel")} />
                 </div>
@@ -565,7 +569,7 @@ export function Dashboard({
                     animate={{ rotate: [-12, 12, -12] }}
                     transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut" }}
                   >
-                    <Moon className="text-[#1A6BB5] w-5 h-5" />
+                    <img src="/icons/moon-sign.png" alt="" className="w-7 h-7 opacity-80" />
                   </motion.div>
                   <Badge text={t("dashboard.western.moonLabel")} />
                 </div>
@@ -724,31 +728,72 @@ export function Dashboard({
               </div>
             </div>
 
-            {/* Day Master */}
-            <div className="morning-card p-6 flex flex-col gap-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Zap className="text-[#8B6914] w-4 h-4 shrink-0" />
-                  <h3 className="text-[10px] uppercase tracking-[0.3em] text-[#8B6914]/65">
-                    {t("dashboard.bazi.dayMasterTitle")}
-                  </h3>
+            {/* Day Master — enriched with Heavenly Stem data */}
+            <div className="morning-card p-5 sm:p-7 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <Zap className="text-[#8B6914] w-5 h-5 shrink-0" />
+                  <Badge text={t("dashboard.bazi.vitalityLabel")} />
                 </div>
-                <Badge text={t("dashboard.bazi.vitalityLabel")} />
+                <h3 className="font-serif text-xl sm:text-2xl text-[#1E2A3A] leading-tight mb-0.5">
+                  {dayMaster}{dayMasterStem ? ` ${dayMasterStem.pinyin}` : ""}
+                </h3>
+                <p className="text-[9px] uppercase tracking-[0.25em] text-[#8B6914]/50 mb-4">
+                  {dayMasterStem
+                    ? `${t("dashboard.bazi.dayMasterTitle")} — ${dayMasterStem.name[lang]}`
+                    : t("dashboard.bazi.dayMasterTitle")}
+                </p>
+                <p className="text-xs text-[#1E2A3A]/55 leading-relaxed">
+                  {dayMasterStem
+                    ? dayMasterStem.dayMaster[lang]
+                    : t("dashboard.bazi.dayMasterDesc")}
+                </p>
               </div>
-              <div className="font-serif text-2xl text-[#1E2A3A]">{dayMaster}</div>
-              <p className="text-xs text-[#1E2A3A]/45 leading-relaxed">{t("dashboard.bazi.dayMasterDesc")}</p>
+              <div className="flex justify-between items-center border-t border-[#8B6914]/10 pt-4 mt-5">
+                <div className="flex items-center gap-2">
+                  <span className="font-serif text-xl text-[#8B6914]">{dayMaster}</span>
+                  {dayMasterStem && (
+                    <span className="text-[10px] text-[#1E2A3A]/35">
+                      {dayMasterStem.element} · {dayMasterStem.yinYang === "yang" ? "Yang" : "Yin"} · {dayMasterStem.pinyin}
+                    </span>
+                  )}
+                </div>
+                <Badge text={lang === "de" ? "TAGESMEISTER" : "DAY MASTER"} />
+              </div>
             </div>
 
-            {/* Month Stem */}
-            <div className="morning-card p-6 flex flex-col gap-3">
-              <div className="flex items-center justify-between">
-                <h3 className="text-[10px] uppercase tracking-[0.3em] text-[#8B6914]/65">
-                  {t("dashboard.bazi.monthStemTitle")}
+            {/* Month Stem — enriched with Heavenly Stem data */}
+            <div className="morning-card p-5 sm:p-7 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-lg leading-none select-none text-[#8B6914]">月</span>
+                  <Badge text={t("dashboard.bazi.monthStemBadge")} />
+                </div>
+                <h3 className="font-serif text-xl sm:text-2xl text-[#1E2A3A] leading-tight mb-0.5">
+                  {monthStem}{monthStemData ? ` ${monthStemData.pinyin}` : ""}
                 </h3>
-                <Badge text={t("dashboard.bazi.monthStemBadge")} />
+                <p className="text-[9px] uppercase tracking-[0.25em] text-[#8B6914]/50 mb-4">
+                  {monthStemData
+                    ? `${t("dashboard.bazi.monthStemTitle")} — ${monthStemData.name[lang]}`
+                    : t("dashboard.bazi.monthStemTitle")}
+                </p>
+                <p className="text-xs text-[#1E2A3A]/55 leading-relaxed">
+                  {monthStemData
+                    ? monthStemData.monthStem[lang]
+                    : t("dashboard.bazi.monthStemDesc")}
+                </p>
               </div>
-              <div className="font-serif text-2xl text-[#1E2A3A]">{monthStem}</div>
-              <p className="text-xs text-[#1E2A3A]/45 leading-relaxed">{t("dashboard.bazi.monthStemDesc")}</p>
+              <div className="flex justify-between items-center border-t border-[#8B6914]/10 pt-4 mt-5">
+                <div className="flex items-center gap-2">
+                  <span className="font-serif text-xl text-[#8B6914]">{monthStem}</span>
+                  {monthStemData && (
+                    <span className="text-[10px] text-[#1E2A3A]/35">
+                      {monthStemData.element} · {monthStemData.yinYang === "yang" ? "Yang" : "Yin"} · {monthStemData.pinyin}
+                    </span>
+                  )}
+                </div>
+                <Badge text={lang === "de" ? "MONATSSTAMM" : "MONTH STEM"} />
+              </div>
             </div>
           </div>
         </div>
