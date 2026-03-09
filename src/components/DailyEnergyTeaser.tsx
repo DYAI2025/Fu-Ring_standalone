@@ -43,7 +43,7 @@ export function DailyEnergyTeaser({ signal, lang, isPremium }: DailyEnergyTeaser
 
       <Link
         to="/fu-ring"
-        className="inline-block text-xs px-4 py-2 rounded border border-[#8B6914]/25 text-[#8B6914]/70 transition-colors hover:bg-[#8B6914]/8 hover:border-[#8B6914]/40"
+        className="inline-block text-xs px-4 py-2 rounded border border-[#8B6914]/25 text-[#8B6914]/70 transition-colors hover:bg-[#8B6914]/8 hover:border-[#8B6914]/40 focus-visible:ring-2 focus-visible:ring-gold/50"
       >
         {lang === 'de' ? 'Transit-Details' : 'Transit Details'}
       </Link>

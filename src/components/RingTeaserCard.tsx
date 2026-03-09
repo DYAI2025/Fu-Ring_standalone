@@ -39,7 +39,7 @@ export function RingTeaserCard({ signal, lang }: RingTeaserProps) {
           <div className="space-y-1.5 mb-4">
             {top3.map(({ val, idx }) => (
               <div key={idx} className="flex items-center gap-2 text-xs text-[#1E2A3A]/55">
-                <span className="font-mono w-8 text-right text-[#8B6914]/70">{Math.round(val * 100)}%</span>
+                <span className="font-mono w-8 text-right text-[#8B6914]/70" style={{ fontVariantNumeric: 'tabular-nums' }}>{Math.round(val * 100)}%</span>
                 <span>{SECTOR_DOMAINS[idx]}</span>
               </div>
             ))}
@@ -51,7 +51,7 @@ export function RingTeaserCard({ signal, lang }: RingTeaserProps) {
 
           <Link
             to="/fu-ring"
-            className="inline-block text-xs px-4 py-2 rounded border border-[#8B6914]/25 text-[#8B6914]/70 transition-colors hover:bg-[#8B6914]/8 hover:border-[#8B6914]/40"
+            className="inline-block text-xs px-4 py-2 rounded border border-[#8B6914]/25 text-[#8B6914]/70 transition-colors hover:bg-[#8B6914]/8 hover:border-[#8B6914]/40 focus-visible:ring-2 focus-visible:ring-gold/50"
           >
             {lang === 'de' ? 'Fu-Ring erkunden' : 'Explore Fu-Ring'}
           </Link>

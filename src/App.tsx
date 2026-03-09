@@ -415,11 +415,12 @@ function AppShell({ user, lang, setLang, t, siteVisible, planetariumMode, toggle
             onClick={ambiente.toggle}
             className="text-[#1E2A3A]/40 hover:text-[#8B6914] transition-colors"
             title={ambiente.playing ? t("nav.pauseAudioTitle") : t("nav.playAudioTitle")}
+            aria-label={ambiente.playing ? t("nav.pauseAudioTitle") : t("nav.playAudioTitle")}
           >
             {ambiente.playing ? (
-              <Volume2 className="w-4 h-4 text-[#8B6914]" />
+              <Volume2 className="w-4 h-4 text-[#8B6914]" aria-hidden="true" />
             ) : (
-              <VolumeX className="w-4 h-4" />
+              <VolumeX className="w-4 h-4" aria-hidden="true" />
             )}
           </button>
 
@@ -431,10 +432,11 @@ function AppShell({ user, lang, setLang, t, siteVisible, planetariumMode, toggle
           </span>
           <button
             onClick={signOut}
-            className="w-8 h-8 rounded-full border border-[#8B6914]/25 flex items-center justify-center hover:bg-[#8B6914]/10 hover:border-[#8B6914]/45 transition-all"
+            className="w-8 h-8 rounded-full border border-[#8B6914]/25 flex items-center justify-center hover:bg-[#8B6914]/10 hover:border-[#8B6914]/45 transition-colors"
             title={t("nav.signOut")}
+            aria-label={t("nav.signOut")}
           >
-            <LogOut className="w-3 h-3 text-[#8B6914]/70" />
+            <LogOut className="w-3 h-3 text-[#8B6914]/70" aria-hidden="true" />
           </button>
         </div>
       </header>
@@ -451,18 +453,18 @@ function AppShell({ user, lang, setLang, t, siteVisible, planetariumMode, toggle
 
       {/* ── Bottom Nav (Mobile) ───────────────────────────────────────── */}
       <nav className="md:hidden fixed bottom-0 w-full bg-white/70 backdrop-blur-xl border-t border-[#8B6914]/15 flex items-center justify-around z-50 h-16">
-        <div className="lang-toggle" role="group">
-          <button className={lang === "de" ? "active" : ""} onClick={() => setLang("de")}>DE</button>
-          <button className={lang === "en" ? "active" : ""} onClick={() => setLang("en")}>EN</button>
+        <div className="lang-toggle" role="group" aria-label="Sprache">
+          <button className={lang === "de" ? "active" : ""} onClick={() => setLang("de")} aria-pressed={lang === "de"}>DE</button>
+          <button className={lang === "en" ? "active" : ""} onClick={() => setLang("en")} aria-pressed={lang === "en"}>EN</button>
         </div>
 
-        <Link to="/" className={`flex flex-col items-center gap-1 ${location.pathname === "/" ? "text-[#8B6914]" : "text-[#1E2A3A]/40"}`}>
-          <LayoutGrid className="w-5 h-5" />
+        <Link to="/" className={`flex flex-col items-center gap-1 focus-visible:ring-2 focus-visible:ring-gold/50 rounded ${location.pathname === "/" ? "text-[#8B6914]" : "text-[#1E2A3A]/40"}`}>
+          <LayoutGrid className="w-5 h-5" aria-hidden="true" />
           <span className="text-[8px] uppercase tracking-tighter">{t("nav.atlas")}</span>
         </Link>
 
-        <Link to="/fu-ring" className={`flex flex-col items-center gap-1 ${location.pathname === "/fu-ring" ? "text-[#8B6914]" : "text-[#1E2A3A]/40"}`}>
-          <CircleDot className="w-5 h-5" />
+        <Link to="/fu-ring" className={`flex flex-col items-center gap-1 focus-visible:ring-2 focus-visible:ring-gold/50 rounded ${location.pathname === "/fu-ring" ? "text-[#8B6914]" : "text-[#1E2A3A]/40"}`}>
+          <CircleDot className="w-5 h-5" aria-hidden="true" />
           <span className="text-[8px] uppercase tracking-tighter">Fu-Ring</span>
         </Link>
 
@@ -472,14 +474,15 @@ function AppShell({ user, lang, setLang, t, siteVisible, planetariumMode, toggle
           aria-label="Planetarium"
           className={planetariumMode ? "text-[#D4AF37]" : "text-[#1E2A3A]/40"}
         >
-          <Telescope className="w-5 h-5" />
+          <Telescope className="w-5 h-5" aria-hidden="true" />
         </button>
 
         <button
           onClick={ambiente.toggle}
+          aria-label={ambiente.playing ? t("nav.pauseAudioTitle") : t("nav.playAudioTitle")}
           className="text-[#1E2A3A]/40 hover:text-[#8B6914] transition-colors"
         >
-          {ambiente.playing ? <Volume2 className="w-5 h-5 text-[#8B6914]" /> : <VolumeX className="w-5 h-5" />}
+          {ambiente.playing ? <Volume2 className="w-5 h-5 text-[#8B6914]" aria-hidden="true" /> : <VolumeX className="w-5 h-5" aria-hidden="true" />}
         </button>
       </nav>
     </motion.div>
