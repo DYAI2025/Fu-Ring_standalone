@@ -7,10 +7,41 @@ import { createClient } from "@supabase/supabase-js";
 import Stripe from "stripe";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
+import { GoogleGenAI } from "@google/genai";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const app = express();
+
+// ── Gemini client (server-side only — key never reaches browser) ──────
+const geminiClient = process.env.GEMINI_API_KEY
+  ? new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
+  : null;
+
+function buildGeminiPrompt(data, lang) {
+  return `
+You are Bazodiac's fusion astrologer — the ONLY system that synthesizes Western astrology, Chinese BaZi, and Wu-Xing Five Elements into one unified reading.
+
+BIRTH DATA (JSON):
+${JSON.stringify(data, null, 2)}
+
+TASK: Write a deeply personal ${lang === 'de' ? 'German' : 'English'} horoscope interpretation (400–500 words, 5 paragraphs, Markdown, no bullet points). Address the reader as "${lang === 'de' ? 'du' : 'you'}".
+
+STRUCTURE — each paragraph MUST cross-reference at least two systems:
+
+1. **Your Cosmic Identity**: Start with the Western Sun sign and immediately bridge to the BaZi Day Master. What does THIS specific combination reveal that neither system alone can show?
+
+2. **Emotional Depths**: Connect Moon sign with the BaZi pillars' emotional patterns. How does Wu-Xing's dominant element color these emotional currents?
+
+3. **The Fusion Revelation**: This is the core. Use the fusion data to reveal the UNIQUE intersection — the pattern that emerges ONLY when Western + BaZi + Wu-Xing are layered together. This is what no other app can show. Make this paragraph feel like a discovery.
+
+4. **Wu-Xing Balance**: Which elements are strong, which are weak? How does this elemental map interact with the Western Ascendant? Give one concrete life recommendation based on elemental balance.
+
+5. **Your Path Forward**: Synthesize all three systems into a forward-looking invitation. End with a sentence that makes the reader feel truly seen.
+
+TONE: Warm, precise, mystical but grounded. Never generic. Every sentence must feel like it was written for THIS specific birth chart.
+`.trim();
+}
 
 // ── Security Headers ─────────────────────────────────────────────────
 app.use(helmet({
@@ -567,6 +598,33 @@ app.post("/api/share", express.json(), async (req, res) => {
 app.get("/share/:hash", async (_req, res) => {
   const html = await fs.promises.readFile(path.join(distPath, "index.html"), "utf-8");
   res.send(html);
+});
+
+// ── AI Interpretation proxy (Gemini key stays server-side) ───────────
+app.post("/api/interpret", express.json({ limit: "50kb" }), async (req, res) => {
+  const { data, lang = "en" } = req.body || {};
+  if (!data || typeof data !== "object") {
+    return res.status(400).json({ error: "data is required" });
+  }
+  if (!geminiClient) {
+    return res.status(503).json({ error: "Interpretation service unavailable" });
+  }
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 20000);
+    const response = await geminiClient.models.generateContent({
+      model: "gemini-2.0-flash",
+      contents: buildGeminiPrompt(data, lang),
+      config: { temperature: 0.75 },
+    });
+    clearTimeout(timeout);
+    const text = response.text?.trim();
+    if (!text) return res.status(502).json({ error: "Empty response from AI" });
+    res.json({ text });
+  } catch (err) {
+    console.warn("[interpret] Gemini failed:", err.message);
+    res.status(502).json({ error: "AI interpretation failed" });
+  }
 });
 
 // ── Static files ────────────────────────────────────────────────────
