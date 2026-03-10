@@ -453,7 +453,6 @@ export function Dashboard({
       <motion.div className="mb-14" {...fadeIn(0.1)}>
         <BirthChartOrrery
           birthDate={orreryDate}
-          height="460px"
           planetariumMode={planetariumMode}
           birthConstellation={birthConstellationKey}
           autoPlay={showBirthSkyWelcome}
