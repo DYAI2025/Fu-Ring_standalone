@@ -17,12 +17,15 @@ const TRACKS: string[] = [
   "/ambiente/bazodiac/Into the Wild.mp3",
   "/ambiente/bazodiac/Neptune's Flow (2).mp3",
   "/ambiente/bazodiac/Rite of Emergence.mp3",
+  "/ambiente/bazodiac/Roots and Stars (1).mp3",
   "/ambiente/bazodiac/Roots and Stars.mp3",
   "/ambiente/bazodiac/Sacred Water Flow Through Mycelium.mp3",
   "/ambiente/bazodiac/Shining With the Stars.mp3",
+  "/ambiente/bazodiac/Symmetry of the Celestial Sphere (1).mp3",
   "/ambiente/bazodiac/Symmetry of the Celestial Sphere.mp3",
   "/ambiente/bazodiac/Wood Dragon Awakening.mp3",
   "/ambiente/bazodiac/Wood Dragon Rebirth.mp3",
+  "/ambiente/bazodiac/Zodiac's Breath (2).mp3",
   "/ambiente/bazodiac/Zodiac's Breath.mp3",
 ];
 
