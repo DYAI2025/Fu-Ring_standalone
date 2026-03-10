@@ -1023,11 +1023,11 @@ export function Dashboard({
               <AnimatePresence>
                 {leviActive && (
                   <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
                     transition={{ duration: 0.4, ease: "easeOut" }}
-                    className="relative z-20 w-full flex justify-center overflow-hidden"
+                    className="relative z-20 w-full flex justify-center"
                   >
                     {/* @ts-ignore */}
                     <elevenlabs-convai
