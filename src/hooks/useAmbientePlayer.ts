@@ -2,13 +2,28 @@ import { useRef, useState, useCallback, useEffect } from "react";
 
 // All ambiente tracks served from public/ambiente/.
 const TRACKS: string[] = [
+  "/ambiente/bazodiac/Aetheric Resonance.mp3",
+  "/ambiente/bazodiac/Astral Paths.mp3",
+  "/ambiente/bazodiac/Bazodiac's Breath - A Digital-Biological Organism.mp3",
   "/ambiente/bazodiac/Cosmic Birth A Meditation on Stellar Genesis.mp3",
+  "/ambiente/bazodiac/Cosmic Heartbeat.mp3",
   "/ambiente/bazodiac/Cosmic Resonance.mp3",
+  "/ambiente/bazodiac/Darkness Is a Mirror.mp3",
+  "/ambiente/bazodiac/Elysian Transition (3).mp3",
+  "/ambiente/bazodiac/Elysian Transition.mp3",
+  "/ambiente/bazodiac/Galactic Garden.mp3",
   "/ambiente/bazodiac/Geometry of Grace.mp3",
+  "/ambiente/bazodiac/Glass Shatters.mp3",
+  "/ambiente/bazodiac/Into the Wild.mp3",
   "/ambiente/bazodiac/Neptune's Flow (2).mp3",
   "/ambiente/bazodiac/Rite of Emergence.mp3",
+  "/ambiente/bazodiac/Roots and Stars.mp3",
+  "/ambiente/bazodiac/Sacred Water Flow Through Mycelium.mp3",
+  "/ambiente/bazodiac/Shining With the Stars.mp3",
+  "/ambiente/bazodiac/Symmetry of the Celestial Sphere.mp3",
   "/ambiente/bazodiac/Wood Dragon Awakening.mp3",
   "/ambiente/bazodiac/Wood Dragon Rebirth.mp3",
+  "/ambiente/bazodiac/Zodiac's Breath.mp3",
 ];
 
 const VOLUME = 0.6;

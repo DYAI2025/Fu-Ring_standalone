@@ -84,7 +84,7 @@ Tailwind v4 with `@theme` custom tokens in `src/index.css`: `--color-obsidian: #
 
 ### Static Assets
 
-Vite serves from `media/` directory (configured as `publicDir: 'media'` in `vite.config.ts`), not the default `public/`.
+Vite serves from `public/` directory (configured as `publicDir: 'public'` in `vite.config.ts`). Static assets should be placed there. The `media/` directory is likely legacy or used for source assets.
 
 ### Deployment
 
