@@ -14,7 +14,7 @@ const __dirname = path.dirname(__filename);
 const app = express();
 
 // ── Boot-time env var validation ─────────────────────────────────────
-const REQUIRED_ENV_VARS = ['GEMINI_API_KEY', 'SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY'];
+const REQUIRED_ENV_VARS = ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY'];
 const missing = REQUIRED_ENV_VARS.filter(v => !process.env[v]);
 if (missing.length > 0) {
   console.error(`[server] Missing required environment variables: ${missing.join(', ')}`);
@@ -22,7 +22,7 @@ if (missing.length > 0) {
   process.exit(1);
 }
 
-const OPTIONAL_ENV_VARS = ['ELEVENLABS_TOOL_SECRET'];
+const OPTIONAL_ENV_VARS = ['GEMINI_API_KEY', 'ELEVENLABS_TOOL_SECRET'];
 for (const v of OPTIONAL_ENV_VARS) {
   if (!process.env[v]) {
     console.warn(`[server] Optional env var not set: ${v} (some features may be degraded)`);
@@ -64,7 +64,7 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "https://maps.googleapis.com", "https://elevenlabs.io"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://maps.googleapis.com", "https://elevenlabs.io", "https://unpkg.com"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
       imgSrc: ["'self'", "data:", "blob:", "https:"],
