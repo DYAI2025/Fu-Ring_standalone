@@ -1024,7 +1024,8 @@ export function Dashboard({
         </div>
 
         {/* Levi — 1/3 width — visible teaser, interaction gated */}
-        <div ref={leviSectionRef} className="morning-card p-5 sm:p-7 flex flex-col gap-5 sm:gap-6">
+        {/* morning-card with backdrop-filter disabled: blur() + border-radius creates a clipping stacking context that hides the ElevenLabs popup */}
+        <div ref={leviSectionRef} className="morning-card p-5 sm:p-7 flex flex-col gap-5 sm:gap-6" style={{ backdropFilter: 'none', WebkitBackdropFilter: 'none', overflow: 'visible' }}>
           <div className="flex items-start gap-4">
             <div className="relative mt-1.5 shrink-0">
               <div className={`w-2 h-2 rounded-full breathing ${
@@ -1065,7 +1066,7 @@ export function Dashboard({
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.4, ease: "easeOut" }}
-                    className="relative z-20 w-full flex justify-center"
+                    className="relative z-[9999] w-full flex justify-center"
                   >
                     {/* @ts-ignore */}
                     <elevenlabs-convai
