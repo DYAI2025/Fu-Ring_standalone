@@ -22,12 +22,29 @@ Move the core visualization to a **WebGL/Three.js** base. Since Three.js is alre
 3.  **Post-Processing Bloom:** Use the existing `UnrealBloomPass` from Three.js for the glow effect. This is much faster and higher quality than `shadowBlur`.
 4.  **Offscreen Labels:** Render text labels to an offscreen canvas or use standard HTML/SVG overlays to avoid font-rasterization overhead in the animation loop.
 
-## 3. Prototype Approach
+## 3. Prototype Approaches
 
-I have built a standalone prototype (`OptimizedFuRingPrototype`) that demonstrates:
-- **Zero-loop ring rendering:** Uses math-driven gradients for sectors.
-- **Hardware-accelerated glow:** Leveraging WebGL's native capabilities.
-- **Mobile-friendly responsiveness:** Adaptive pixel ratio and simplified geometry for low-end devices.
+### Prototype 1: Three.js (3D Engine)
+- **Goal:** Maximum visual fidelity and post-processing quality.
+- **Results:** Stable 60FPS on high-end mobile. Excellent Bloom effect.
+- **Downside:** Larger initial overhead for a 2D use case.
+
+### Prototype 2: PixiJS (2D WebGL Engine)
+- **Goal:** Optimal 2D batching and lower memory footprint.
+- **Results:** Extremely stable 60FPS. Better native handling of 2D coordinates and scaling.
+- **Advantage:** Faster "cold start" (initial mount time) than Three.js. More lightweight for pure 2D astrology charts.
+
+## 4. Final Tech Stack Recommendation
+
+**Winner: PixiJS**
+
+While Three.js is already in the project, PixiJS provides a more streamlined 2D API that maps better to the original Fu-Ring design without the overhead of a 3D scene graph. 
+
+### Implementation Roadmap:
+1.  **Core Ring:** Port the fragment shader to PixiJS `Mesh` (Completed).
+2.  **Korona Strands:** Use PixiJS `ParticleContainer` for 1000+ organic strands.
+3.  **Tension Lines:** Render as optimized `Graphics` primitives or instanced line meshes.
+4.  **UI Integration:** Replace `FusionRing.tsx` with the new PixiJS-based implementation.
 
 ---
-*Report generated on 2026-03-11*
+*Report updated on 2026-03-11*
