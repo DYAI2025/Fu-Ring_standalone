@@ -6,6 +6,7 @@ const FuRingPage = lazy(() => import('./pages/FuRingPage'));
 const WuXingPage = lazy(() => import('./pages/WuXingPage'));
 const FuRingPrototypePage = lazy(() => import('./pages/FuRingPrototypePage'));
 const FuRingPixiPrototypePage = lazy(() => import('./pages/FuRingPixiPrototypePage'));
+const GpuFuRingPage = lazy(() => import('./pages/GpuFuRingPage'));
 
 function PageLoader() {
   return (
@@ -36,6 +37,7 @@ export function AppRoutes() {
         <Route path="/wu-xing" element={<WuXingPage />} />
         <Route path="/fu-ring-prototype" element={<FuRingPrototypePage />} />
         <Route path="/fu-ring-pixi" element={<FuRingPixiPrototypePage />} />
+        <Route path="/fu-ring-gpgpu" element={<GpuFuRingPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>

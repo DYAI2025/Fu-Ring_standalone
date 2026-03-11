@@ -29,14 +29,20 @@ Move the core visualization to a **WebGL/Three.js** base. Since Three.js is alre
 - **Results:** Stable 60FPS on high-end mobile. Excellent Bloom effect.
 - **Downside:** Larger initial overhead for a 2D use case.
 
-### Prototype 2: PixiJS (2D WebGL Engine)
+### Prototype 2: PixiJS (WebGL 2D Engine)
 - **Goal:** Optimal 2D batching and lower memory footprint.
 - **Results:** Extremely stable 60FPS. Better native handling of 2D coordinates and scaling.
-- **Advantage:** Faster "cold start" (initial mount time) than Three.js. More lightweight for pure 2D astrology charts.
+
+### Prototype 3: GPGPU Swarm (The Rehoboam Entity)
+- **Goal:** "Supernatural" high-fidelity visualization using 65,000+ particles.
+- **Tech:** FBO (Frame Buffer Object) Ping-Pong simulation.
+- **Results:** Cinematic "Westworld" aesthetic. Real-time swarm intelligence that reacts to "Divergence Spikes".
+- **Performance:** 60FPS maintained by offloading all physics and position calculations to the GPU via GPGPU shaders.
 
 ## 4. Final Tech Stack Recommendation
 
-**Winner: PixiJS**
+**Winner for High-End Experience: GPGPU Three.js**
+
 
 While Three.js is already in the project, PixiJS provides a more streamlined 2D API that maps better to the original Fu-Ring design without the overhead of a 3D scene graph. 
 
