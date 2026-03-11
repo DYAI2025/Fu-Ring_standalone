@@ -129,6 +129,8 @@ export default function App() {
           }
 
           setInterpretation(storedInterpretation);
+          setTileTexts((json.tiles as TileTexts) || {});
+          setHouseTexts((json.houses as HouseTexts) || {});
 
           // Birth date
           if (profile.birth_date) {
@@ -175,7 +177,7 @@ export default function App() {
       // Persist to Supabase (all three functions check for duplicates internally)
       try {
         await Promise.all([
-          upsertAstroProfile(user.id, data, results, aiResult.interpretation),
+          upsertAstroProfile(user.id, data, results, aiResult.interpretation, aiResult.tiles || {}, aiResult.houses || {}),
           insertBirthData(user.id, data),
           insertNatalChart(user.id, results),
         ]);
