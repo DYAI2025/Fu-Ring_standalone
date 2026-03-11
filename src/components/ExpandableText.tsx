@@ -22,17 +22,19 @@ export function ExpandableText({ text }: ExpandableTextProps) {
           ? (lang === "de" ? "Weniger" : "Less")
           : (lang === "de" ? "Mehr erfahren" : "Read more")}
       </button>
-      <AnimatePresence>
+      <AnimatePresence initial={false}>
         {open && (
-          <motion.p
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
-            className="text-xs text-[#1E2A3A]/55 leading-relaxed mt-2 overflow-hidden"
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+            style={{ overflow: "hidden" }}
           >
-            {text}
-          </motion.p>
+            <p className="text-xs text-[#1E2A3A]/55 leading-relaxed mt-2">
+              {text}
+            </p>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>
