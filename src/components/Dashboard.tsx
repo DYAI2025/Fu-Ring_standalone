@@ -528,14 +528,9 @@ export function Dashboard({
                       {t("dashboard.western.sunTitle")}
                     </p>
                   </div>
-                  {getZodiacArt(sunSign) && (
-                    <img
-                      src={getZodiacArt(sunSign)}
-                      alt={sunSignName}
-                      className="w-24 h-24 sm:w-28 sm:h-28 object-contain shrink-0 -mt-2"
-                      loading="lazy"
-                    />
-                  )}
+                  {(() => { const art = getZodiacArt(sunSign); return art ? (
+                    <img src={art} alt={sunSignName} className="w-24 h-24 sm:w-28 sm:h-28 object-contain shrink-0 -mt-2" loading="lazy" />
+                  ) : null; })()}
                 </div>
 
                 {/* Sign-specific description */}
@@ -575,14 +570,9 @@ export function Dashboard({
                       {t("dashboard.western.moonTitle")}
                     </p>
                   </div>
-                  {getZodiacArt(moonSign) && (
-                    <img
-                      src={getZodiacArt(moonSign)}
-                      alt={moonSignName}
-                      className="w-24 h-24 sm:w-28 sm:h-28 object-contain shrink-0 -mt-2"
-                      loading="lazy"
-                    />
-                  )}
+                  {(() => { const art = getZodiacArt(moonSign); return art ? (
+                    <img src={art} alt={moonSignName} className="w-24 h-24 sm:w-28 sm:h-28 object-contain shrink-0 -mt-2" loading="lazy" />
+                  ) : null; })()}
                 </div>
 
                 <p className="text-xs text-[#1E2A3A]/55 leading-relaxed">
