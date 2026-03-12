@@ -14,17 +14,32 @@ npm run build      # Production build → dist/
 npm run start      # Express production server (serves dist/)
 npm run lint       # TypeScript type-check (tsc --noEmit)
 npm run clean      # Remove dist/
+npm run test       # Run Vitest test suite (once)
+npm run test:watch # Vitest in watch mode
+npm run test:coverage # Vitest with coverage
 
 # Full local dev (needs both):
 # Terminal 1: npm run dev                    (Vite on :3000)
 # Terminal 2: PORT=3001 node server.mjs      (Express API on :3001, for /api/auth, /api/profile, /api/agent)
 ```
 
-Node 20.19+ required (pinned in `.nvmrc`). No test suite — `npm run lint` (tsc --noEmit) is the only automated check. Copy `.env.example` to `.env.local` and fill values before starting dev.
+Node 20.19+ required (pinned in `.nvmrc`). Tests live in `src/__tests__/` and use Vitest. Copy `.env.example` to `.env.local` and fill values before starting dev.
 
 ## Architecture
 
-**Single-page React 19 app** — Vite + Tailwind CSS v4 + TypeScript. No router; the app flow is state-driven: `Splash → AuthGate → BirthForm → Dashboard`. All state lives in `App.tsx` via `useState`.
+**React 19 SPA** — Vite + React Router v6 + Tailwind CSS v4 + TypeScript. The top-level auth/onboarding flow is state-driven in `App.tsx` (`Splash → AuthGate → BirthForm`), then React Router takes over for authenticated pages.
+
+### Routes
+
+Defined in `src/router.tsx`, all lazy-loaded:
+
+| Route | Page |
+|-------|------|
+| `/` | `DashboardPage` — main astro dashboard |
+| `/fu-ring` | `FuRingPage` — Fusion Ring visualization |
+| `/wu-xing` | `WuXingPage` — Wu Xing five-elements detail |
+| `/wissen` | `WissenPage` — SEO article index |
+| `/wissen/:slug` | `ArtikelPage` — individual SEO article |
 
 ### Two Server Contexts
 
@@ -52,7 +67,13 @@ Node 20.19+ required (pinned in `.nvmrc`). No test suite — `npm run lint` (tsc
 | `src/components/BirthChartOrrery.tsx` | Three.js 3D solar system visualization with Keplerian orbital mechanics |
 | `src/lib/astronomy/` | Orbital calculations (Kepler solver, J2000 epoch), star catalog (150 stars), constellation data, planet orbital elements |
 | `src/lib/3d/materials.ts` | Custom GLSL shaders (sun corona, atmospheric Fresnel glow, Saturn rings with Cassini division) |
-| `server.mjs` | Production Express server: BAFE proxy with fallback chain, Supabase admin auth, ElevenLabs tool endpoints, debug probe at `/api/debug-bafe` |
+| `server.mjs` | Production Express server: BAFE proxy with fallback chain, Supabase admin auth, ElevenLabs tool endpoints, Stripe checkout + webhook, debug probe at `/api/debug-bafe` |
+| `src/lib/fusion-ring/` | Fusion Ring engine — signal computation, BaZi/Western/Wu-Xing layers, transit math, canvas draw utilities |
+| `src/contexts/FusionRingContext.tsx` | React context providing Fusion Ring state to the whole app |
+| `src/hooks/useFusionRing.ts` | Hook that combines BAFE data + transit data into FusionRing signal |
+| `src/hooks/usePremium.ts` | Reads `profiles.is_premium` from Supabase; re-fetches on tab focus (for Stripe redirect return) |
+| `src/components/PremiumGate.tsx` | Wrapper that locks content behind premium; triggers Stripe checkout via `/api/checkout` |
+| `src/data/articles.ts` | SEO article content (6 articles, full German text, TypeScript) |
 
 ### BAFE Response Mapping (Important Gotcha)
 
@@ -74,7 +95,7 @@ If BAFE schema changes, update the mappers in `api.ts` — the Dashboard expects
 
 Two scopes — `VITE_` prefixed vars are exposed to browser, unprefixed are server-only. See `.env.example` for the full list. Critical:
 - Browser: `VITE_GEMINI_API_KEY`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_BAFE_BASE_URL`, `VITE_ELEVENLABS_AGENT_ID`
-- Server-only: `SUPABASE_SERVICE_ROLE_KEY`, `ELEVENLABS_TOOL_SECRET`, `BAFE_INTERNAL_URL`
+- Server-only: `SUPABASE_SERVICE_ROLE_KEY`, `ELEVENLABS_TOOL_SECRET`, `BAFE_INTERNAL_URL`, `STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID`, `STRIPE_WEBHOOK_SECRET`
 
 Note: `vite.config.ts` also exposes `GEMINI_API_KEY` (non-VITE prefixed) via `define` for backward compat.
 
@@ -99,3 +120,4 @@ Railway via `nixpacks.toml` + `railway.json`. Build: `npm ci && npm run build`. 
 - BAFE API cannot always be reached from local/CI environments (`ENETUNREACH`). The app is designed to degrade gracefully — failed endpoints return empty data and the Dashboard shows "—".
 - No contract tests against BAFE; schema changes require manual verification.
 - The README references a legacy `readings` table — the current Supabase schema uses `astro_profiles`, `birth_data`, `natal_charts` (see `supabase-schema.sql`).
+- Stripe is optional at runtime: `server.mjs` checks `process.env.STRIPE_SECRET_KEY` before initializing; checkout returns 503 if unconfigured.
