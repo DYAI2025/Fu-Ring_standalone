@@ -4,6 +4,7 @@ import { z } from 'zod';
 const SpaceWeatherSchema = z.object({
   kp_index: z.coerce.number().min(0).max(9),
   fetched_at: z.string().optional(),
+  source: z.string().optional(),
 });
 
 type SpaceWeatherState = {

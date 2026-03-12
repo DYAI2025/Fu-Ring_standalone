@@ -458,6 +458,60 @@ app.get("/api/transit-state/:userId", (req, res) => {
 });
 
 // ── /api/space-weather ───────────────────────────────────────────────
+// Primary source: NOAA SWPC (no API key required, highly reliable)
+// Fallback: NASA DONKI (requires NASA_API_KEY or uses DEMO_KEY with rate limits)
+
+async function fetchKpFromNOAA() {
+  // NOAA 1-minute Kp planetary index — returns array of {time_tag, kp, estimated, noaa_scale}
+  const url = "https://services.swpc.noaa.gov/json/planetary_k_index_1m.json";
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  try {
+    const response = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeout);
+    if (!response.ok) throw new Error(`NOAA responded with ${response.status}`);
+    const records = await response.json();
+    if (!Array.isArray(records) || records.length === 0) throw new Error("NOAA returned empty data");
+    // Get most recent non-estimated reading, or last entry as fallback
+    const real = records.filter((r) => !r.estimated).at(-1) ?? records.at(-1);
+    const kpRaw = real?.kp ?? real?.kp_index ?? 0;
+    const kp = Math.max(0, Math.min(9, Number.parseFloat(String(kpRaw)) || 0));
+    return { kp_index: kp, source: "NOAA" };
+  } catch (err) {
+    clearTimeout(timeout);
+    throw err;
+  }
+}
+
+async function fetchKpFromDONKI() {
+  const endDate = new Date();
+  const startDate = new Date(endDate.getTime() - 24 * 60 * 60 * 1000);
+  const apiKey = process.env.NASA_API_KEY || "DEMO_KEY";
+  const url =
+    `https://api.nasa.gov/DONKI/KP?startDate=${startDate.toISOString().slice(0, 10)}` +
+    `&endDate=${endDate.toISOString().slice(0, 10)}&api_key=${apiKey}`;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  try {
+    const response = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeout);
+    if (!response.ok) throw new Error(`DONKI responded with ${response.status}`);
+    const records = await response.json();
+    const latest = Array.isArray(records) && records.length > 0 ? records[records.length - 1] : null;
+    const kpRaw =
+      latest?.kpIndex ??
+      latest?.kp_index ??
+      latest?.estimatedKp ??
+      latest?.allKpIndex?.[latest?.allKpIndex?.length - 1]?.kpIndex ??
+      0;
+    const kp = Math.max(0, Math.min(9, Number.parseFloat(String(kpRaw)) || 0));
+    return { kp_index: kp, source: "DONKI" };
+  } catch (err) {
+    clearTimeout(timeout);
+    throw err;
+  }
+}
+
 app.get("/api/space-weather", async (_req, res) => {
   res.set("Cache-Control", "public, max-age=900");
 
@@ -466,62 +520,50 @@ app.get("/api/space-weather", async (_req, res) => {
     return res.json(spaceWeatherCache.payload);
   }
 
-  const endDate = new Date();
-  const startDate = new Date(endDate.getTime() - 24 * 60 * 60 * 1000);
-  const apiKey = process.env.NASA_API_KEY || "DEMO_KEY";
-  const endpoint =
-    `https://api.nasa.gov/DONKI/KP?startDate=${startDate.toISOString().slice(0, 10)}` +
-    `&endDate=${endDate.toISOString().slice(0, 10)}&api_key=${apiKey}`;
+  let result = null;
 
+  // 1. Try NOAA (primary — no API key, production-grade)
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
-    const response = await fetch(endpoint, { signal: controller.signal });
-    clearTimeout(timeout);
+    result = await fetchKpFromNOAA();
+    console.log(`[space-weather] NOAA Kp=${result.kp_index}`);
+  } catch (noaaErr) {
+    console.warn("[space-weather] NOAA failed, trying NASA DONKI:", noaaErr?.message || noaaErr);
+  }
 
-    if (!response.ok) {
-      throw new Error(`DONKI responded with ${response.status}`);
+  // 2. Try NASA DONKI (fallback)
+  if (!result) {
+    try {
+      result = await fetchKpFromDONKI();
+      console.log(`[space-weather] DONKI Kp=${result.kp_index}`);
+    } catch (donkiErr) {
+      console.warn("[space-weather] DONKI also failed:", donkiErr?.message || donkiErr);
     }
+  }
 
-    const records = await response.json();
-    const latest = Array.isArray(records) && records.length > 0
-      ? records[records.length - 1]
-      : null;
+  // 3. Serve stale cache if both fail
+  if (!result && spaceWeatherCache?.payload) {
+    console.warn("[space-weather] both sources failed — serving stale cache");
+    return res.json(spaceWeatherCache.payload);
+  }
 
-    const kpRaw =
-      latest?.kpIndex ??
-      latest?.kp_index ??
-      latest?.estimatedKp ??
-      latest?.allKpIndex?.[latest?.allKpIndex?.length - 1]?.kpIndex ??
-      0;
-
-    const kpParsed = Number.parseFloat(String(kpRaw));
-    const kpIndex = Number.isFinite(kpParsed)
-      ? Math.max(0, Math.min(9, kpParsed))
-      : 0;
-
-    const payload = {
-      kp_index: kpIndex,
-      source: "DONKI",
-      fetched_at: new Date().toISOString(),
-      cache_ttl_seconds: Math.round(SPACE_WEATHER_CACHE_TTL_MS / 1000),
-    };
-
-    spaceWeatherCache = { timestamp: now, payload };
-    return res.json(payload);
-  } catch (err) {
-    if (spaceWeatherCache?.payload) {
-      return res.json(spaceWeatherCache.payload);
-    }
-
-    console.warn("[space-weather] upstream failed, serving neutral fallback:", err?.message || err);
+  // 4. Neutral fallback
+  if (!result) {
+    console.warn("[space-weather] all sources failed — returning neutral Kp=0");
     return res.json({
       kp_index: 0,
-      source: "DONKI",
+      source: "fallback",
       fetched_at: new Date().toISOString(),
       cache_ttl_seconds: Math.round(SPACE_WEATHER_CACHE_TTL_MS / 1000),
     });
   }
+
+  const payload = {
+    ...result,
+    fetched_at: new Date().toISOString(),
+    cache_ttl_seconds: Math.round(SPACE_WEATHER_CACHE_TTL_MS / 1000),
+  };
+  spaceWeatherCache = { timestamp: now, payload };
+  return res.json(payload);
 });
 
 // ── /api/webhook/chart ──────────────────────────────────────────────
