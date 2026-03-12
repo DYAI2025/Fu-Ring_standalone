@@ -16,7 +16,7 @@ const app = express();
 // ── Boot-time env var validation ─────────────────────────────────────
 const REQUIRED_ENV_VARS = ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY'];
 const missing = REQUIRED_ENV_VARS.filter(v => !process.env[v]);
-if (missing.length > 0) {
+if (missing.length > 0 && process.env.NODE_ENV !== "test") {
   console.error(`[server] Missing required environment variables: ${missing.join(', ')}`);
   console.error('[server] Copy .env.example to .env and fill in the required values.');
   process.exit(1);
@@ -180,6 +180,9 @@ setInterval(() => {
 const RETRY_ATTEMPTS = 3;
 const RETRY_BASE_MS = 200;
 const FETCH_TIMEOUT_MS = 10_000;
+const SPACE_WEATHER_CACHE_TTL_MS = 15 * 60 * 1000;
+
+let spaceWeatherCache = null;
 
 // ── Proxy with fallback chain + cache + retry + timeout ──────────────
 async function proxyToBafeWithFallback(targetUrls, req, res) {
@@ -270,6 +273,15 @@ function bafeFallbackUrls(routePath) {
   return urls;
 }
 
+function bafeFallbackUrlsFromCandidates(routeCandidates) {
+  const urls = [];
+  for (const routePath of routeCandidates) {
+    if (BAFE_INTERNAL_URL) urls.push(`${BAFE_INTERNAL_URL}${routePath}`);
+    urls.push(`${BAFE_PUBLIC_URL}${routePath}`);
+  }
+  return urls;
+}
+
 // ── /calculate/:endpoint  (bazi, western, fusion, wuxing, tst) ──────
 const CALC_ENDPOINTS = ["bazi", "western", "fusion", "wuxing", "tst"];
 
@@ -294,6 +306,94 @@ app.get("/api/chart", (req, res) => {
   const qs = new URLSearchParams(req.query).toString();
   const suffix = `/chart${qs ? `?${qs}` : ""}`;
   proxyToBafeWithFallback(bafeFallbackUrls(suffix), req, res);
+});
+
+// ── /api/transit-state/:userId ───────────────────────────────────────
+app.get("/api/transit-state/:userId", (req, res) => {
+  const userId = String(req.params.userId || "").trim();
+  if (!userId) {
+    return res.status(400).json({ error: "Missing userId" });
+  }
+  res.set("Cache-Control", "no-store");
+
+  const safeUserId = encodeURIComponent(userId);
+  const candidates = [
+    `/api/transit-state/${safeUserId}`,
+    `/transit-state/${safeUserId}`,
+  ];
+
+  return proxyToBafeWithFallback(
+    bafeFallbackUrlsFromCandidates(candidates),
+    req,
+    res,
+  );
+});
+
+// ── /api/space-weather ───────────────────────────────────────────────
+app.get("/api/space-weather", async (_req, res) => {
+  res.set("Cache-Control", "public, max-age=900");
+
+  const now = Date.now();
+  if (spaceWeatherCache && now - spaceWeatherCache.timestamp < SPACE_WEATHER_CACHE_TTL_MS) {
+    return res.json(spaceWeatherCache.payload);
+  }
+
+  const endDate = new Date();
+  const startDate = new Date(endDate.getTime() - 24 * 60 * 60 * 1000);
+  const apiKey = process.env.NASA_API_KEY || "DEMO_KEY";
+  const endpoint =
+    `https://api.nasa.gov/DONKI/KP?startDate=${startDate.toISOString().slice(0, 10)}` +
+    `&endDate=${endDate.toISOString().slice(0, 10)}&api_key=${apiKey}`;
+
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+    const response = await fetch(endpoint, { signal: controller.signal });
+    clearTimeout(timeout);
+
+    if (!response.ok) {
+      throw new Error(`DONKI responded with ${response.status}`);
+    }
+
+    const records = await response.json();
+    const latest = Array.isArray(records) && records.length > 0
+      ? records[records.length - 1]
+      : null;
+
+    const kpRaw =
+      latest?.kpIndex ??
+      latest?.kp_index ??
+      latest?.estimatedKp ??
+      latest?.allKpIndex?.[latest?.allKpIndex?.length - 1]?.kpIndex ??
+      0;
+
+    const kpParsed = Number.parseFloat(String(kpRaw));
+    const kpIndex = Number.isFinite(kpParsed)
+      ? Math.max(0, Math.min(9, kpParsed))
+      : 0;
+
+    const payload = {
+      kp_index: kpIndex,
+      source: "DONKI",
+      fetched_at: new Date().toISOString(),
+      cache_ttl_seconds: Math.round(SPACE_WEATHER_CACHE_TTL_MS / 1000),
+    };
+
+    spaceWeatherCache = { timestamp: now, payload };
+    return res.json(payload);
+  } catch (err) {
+    if (spaceWeatherCache?.payload) {
+      return res.json(spaceWeatherCache.payload);
+    }
+
+    console.warn("[space-weather] upstream failed, serving neutral fallback:", err?.message || err);
+    return res.json({
+      kp_index: 0,
+      source: "DONKI",
+      fetched_at: new Date().toISOString(),
+      cache_ttl_seconds: Math.round(SPACE_WEATHER_CACHE_TTL_MS / 1000),
+    });
+  }
 });
 
 // ── /api/webhook/chart ──────────────────────────────────────────────
@@ -715,8 +815,12 @@ app.get("*", (_req, res) => {
 });
 
 const port = Number(process.env.PORT || 3000);
-app.listen(port, "0.0.0.0", () => {
-  console.log(`Astro-Noctum listening on port ${port}`);
-  console.log(`BAFE public  → ${BAFE_PUBLIC_URL}`);
-  if (BAFE_INTERNAL_URL) console.log(`BAFE internal → ${BAFE_INTERNAL_URL}`);
-});
+if (process.env.NODE_ENV !== "test") {
+  app.listen(port, "0.0.0.0", () => {
+    console.log(`Astro-Noctum listening on port ${port}`);
+    console.log(`BAFE public  → ${BAFE_PUBLIC_URL}`);
+    if (BAFE_INTERNAL_URL) console.log(`BAFE internal → ${BAFE_INTERNAL_URL}`);
+  });
+}
+
+export { app };

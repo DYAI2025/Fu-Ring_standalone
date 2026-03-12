@@ -375,6 +375,7 @@ interface AppShellProps {
 
 function AppShell({ user, lang, setLang, t, siteVisible, planetariumMode, togglePlanetarium, ambiente, signOut, error }: AppShellProps) {
   const location = useLocation();
+  const isFuRingRoute = location.pathname === "/fu-ring";
 
   return (
     <motion.div
@@ -483,7 +484,13 @@ function AppShell({ user, lang, setLang, t, siteVisible, planetariumMode, toggle
       </header>
 
       {/* ── Main content (routed) ──────────────────────────────────────── */}
-      <main className="flex-grow pt-6 md:pt-32 pb-24 md:pb-20 relative z-10 container mx-auto px-4 flex flex-col items-center justify-center">
+      <main
+        className={
+          isFuRingRoute
+            ? "flex-grow pt-6 md:pt-24 pb-24 md:pb-20 relative z-10 w-full"
+            : "flex-grow pt-6 md:pt-32 pb-24 md:pb-20 relative z-10 container mx-auto px-4 flex flex-col items-center justify-center"
+        }
+      >
         {error && (
           <div className="w-full max-w-md mb-8 bg-red-100 border border-red-300 text-red-700 px-4 py-3 rounded-xl text-sm text-center">
             {error}
