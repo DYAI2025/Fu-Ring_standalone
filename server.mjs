@@ -95,12 +95,12 @@ app.use(helmet({
         "https://unpkg.com",
         "https://www.googletagmanager.com",
         "https://pagead2.googlesyndication.com",
-        "https://ep1.adtrafficquality.google"
+        "https://*.adtrafficquality.google"
       ],
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
       imgSrc: ["'self'", "data:", "blob:", "https:"],
-      connectSrc: ["'self'", "https://*.supabase.co", "https://generativelanguage.googleapis.com", "https://bafe-production.up.railway.app", "https://bafe.vercel.app", "https://maps.googleapis.com", "https://elevenlabs.io", "https://*.elevenlabs.io", "wss://elevenlabs.io", "wss://*.elevenlabs.io", "https://*.google-analytics.com", "https://*.analytics.google.com", "https://*.googlesyndication.com", "https://pagead2.googlesyndication.com", "https://ep1.adtrafficquality.google", "https://www.googletagmanager.com"],
+      connectSrc: ["'self'", "https://*.supabase.co", "wss://*.supabase.co", "https://generativelanguage.googleapis.com", "https://bafe-production.up.railway.app", "https://bafe.vercel.app", "https://maps.googleapis.com", "https://elevenlabs.io", "https://*.elevenlabs.io", "wss://elevenlabs.io", "wss://*.elevenlabs.io", "https://*.google-analytics.com", "https://*.analytics.google.com", "https://*.googlesyndication.com", "https://pagead2.googlesyndication.com", "https://*.adtrafficquality.google", "https://www.googletagmanager.com"],
       frameSrc: ["'self'", "https://elevenlabs.io", "https://*.elevenlabs.io", "https://checkout.stripe.com", "https://pagead2.googlesyndication.com", "https://googleads.g.doubleclick.net"],
       mediaSrc: ["'self'", "blob:", "https://elevenlabs.io", "https://*.elevenlabs.io"],
       workerSrc: ["'self'", "blob:"],
@@ -313,23 +313,145 @@ app.get("/api/chart", (req, res) => {
 
 // ── /api/transit-state/:userId ───────────────────────────────────────
 app.get("/api/transit-state/:userId", (req, res) => {
+  const clamp01 = (value) => Math.max(0, Math.min(1, Number.isFinite(value) ? value : 0));
+  const normalizeElementValue = (value) => {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return null;
+    return clamp01(n > 1 ? n / 100 : n);
+  };
+  const hashToUnit = (seed) => {
+    const hex = crypto.createHash("sha256").update(seed).digest("hex").slice(0, 8);
+    const int = parseInt(hex, 16);
+    return (int % 1000) / 1000;
+  };
+  const fallbackStateFromProfile = (userId, profile) => {
+    const astro = profile?.astro_json ?? {};
+    const wuxing = astro?.wuxing ?? {};
+
+    const rawElements = Object.values(
+      wuxing?.element_percentages || wuxing?.balance || {},
+    )
+      .map(normalizeElementValue)
+      .filter((v) => v != null);
+
+    const baseFromElements = rawElements.length > 0
+      ? Array.from({ length: 12 }, (_, i) => rawElements[i % rawElements.length])
+      : null;
+
+    const baseFromHash = Array.from({ length: 12 }, (_, i) => {
+      const u = hashToUnit(`${userId}:${profile?.sun_sign || ""}:${profile?.moon_sign || ""}:${i}`);
+      // Stable pseudo profile between 0.25 and 0.75
+      return 0.25 + u * 0.5;
+    });
+
+    const soulprint = (baseFromElements ?? baseFromHash).map(clamp01);
+    const ring = soulprint.map((value, i) => {
+      const drift = (hashToUnit(`${userId}:drift:${i}`) - 0.5) * 0.12;
+      return clamp01(value + drift);
+    });
+
+    return {
+      ring: { sectors: ring },
+      soulprint: { sectors: soulprint },
+      transit_contribution: { transit_intensity: 0.35 },
+      delta: { vs_30day_avg: { avg_sectors: soulprint } },
+      events: [],
+      resolution: 33,
+    };
+  };
+
   const userId = String(req.params.userId || "").trim();
   if (!userId) {
     return res.status(400).json({ error: "Missing userId" });
   }
+
   res.set("Cache-Control", "no-store");
 
   const safeUserId = encodeURIComponent(userId);
-  const candidates = [
+  const candidates = bafeFallbackUrlsFromCandidates([
     `/api/transit-state/${safeUserId}`,
     `/transit-state/${safeUserId}`,
-  ];
+  ]);
 
-  return proxyToBafeWithFallback(
-    bafeFallbackUrlsFromCandidates(candidates),
-    req,
-    res,
-  );
+  const fetchUpstreamTransit = async () => {
+    let lastResponse = null;
+
+    for (const targetUrl of candidates) {
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+        const upstream = await fetch(targetUrl, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+
+        const contentType = upstream.headers.get("content-type") || "application/json";
+        const body = await upstream.text();
+
+        if (upstream.ok) {
+          return { ok: true, status: upstream.status, contentType, body };
+        }
+
+        lastResponse = { ok: false, status: upstream.status, contentType, body, targetUrl };
+
+        // try the next fallback endpoint on any non-2xx
+        continue;
+      } catch (err) {
+        lastResponse = {
+          ok: false,
+          status: 502,
+          contentType: "application/json",
+          body: JSON.stringify({ error: err?.message || "network error" }),
+          targetUrl,
+        };
+      }
+    }
+
+    return lastResponse;
+  };
+
+  const respondWithFallback = async () => {
+    if (!supabaseServer) {
+      return res
+        .status(200)
+        .set("X-Transit-Fallback", "neutral")
+        .json(fallbackStateFromProfile(userId, null));
+    }
+
+    const { data: profile } = await supabaseServer
+      .from("astro_profiles")
+      .select("user_id, sun_sign, moon_sign, astro_json")
+      .eq("user_id", userId)
+      .single();
+
+    return res
+      .status(200)
+      .set("X-Transit-Fallback", profile ? "profile-derived" : "neutral")
+      .json(fallbackStateFromProfile(userId, profile || null));
+  };
+
+  fetchUpstreamTransit()
+    .then(async (upstream) => {
+      if (upstream?.ok) {
+        return res
+          .status(upstream.status)
+          .set("Content-Type", upstream.contentType)
+          .send(upstream.body);
+      }
+
+      console.warn(
+        "[transit-state] upstream unavailable, serving fallback",
+        upstream?.status,
+        upstream?.targetUrl || "",
+      );
+      return respondWithFallback();
+    })
+    .catch(async (err) => {
+      console.warn("[transit-state] unexpected failure, serving fallback:", err?.message || err);
+      return respondWithFallback();
+    });
 });
 
 // ── /api/space-weather ───────────────────────────────────────────────
