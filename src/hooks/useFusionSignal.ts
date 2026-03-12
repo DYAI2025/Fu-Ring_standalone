@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   FusionSignalDataSchema,
   TransitEvent,
@@ -22,6 +22,10 @@ type FusionSignalState = {
 };
 
 const clampTarget = (value: number): number => Math.max(-1, Math.min(2, value));
+const POLL_INTERVAL_MS = 800;
+const OFFLINE_POLL_INTERVAL_MS = 15_000;
+const ERROR_BASE_RETRY_MS = 3_000;
+const ERROR_MAX_RETRY_MS = 30_000;
 
 export const useFusionSignal = (userId: string): FusionSignalState => {
   const [signalData, setSignalData] = useState<FusionSignalData | null>(null);
@@ -29,10 +33,16 @@ export const useFusionSignal = (userId: string): FusionSignalState => {
   const [resolution, setResolution] = useState<number>(33);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
+  const hasLoadedRef = useRef<boolean>(false);
+  const retryCountRef = useRef<number>(0);
+  const timerRef = useRef<number | null>(null);
+  const mountedRef = useRef<boolean>(true);
 
-  const fetchTransitState = useCallback(async () => {
+  const fetchTransitState = useCallback(async (): Promise<boolean> => {
     try {
-      setLoading(true);
+      if (!hasLoadedRef.current) {
+        setLoading(true);
+      }
 
       const response = await fetch(`/api/transit-state/${encodeURIComponent(userId)}`, {
         headers: { 'Content-Type': 'application/json' },
@@ -84,22 +94,87 @@ export const useFusionSignal = (userId: string): FusionSignalState => {
           ? Math.max(0, Math.min(100, transitState.resolution))
           : 33,
       );
+      hasLoadedRef.current = true;
+      retryCountRef.current = 0;
       setError(null);
+      return true;
     } catch (err) {
-      setError(err instanceof Error ? err : new Error('Unknown transit-state error'));
+      retryCountRef.current += 1;
+      // Keep already loaded data visible on transient outages.
+      if (!hasLoadedRef.current) {
+        setError(err instanceof Error ? err : new Error('Unknown transit-state error'));
+      }
+      return false;
     } finally {
       setLoading(false);
     }
   }, [userId]);
 
   useEffect(() => {
-    void fetchTransitState();
-    const interval = window.setInterval(() => {
-      void fetchTransitState();
-    }, 800);
+    mountedRef.current = true;
+
+    const clearTimer = () => {
+      if (timerRef.current != null) {
+        window.clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+
+    const scheduleNext = (delayMs: number) => {
+      clearTimer();
+      timerRef.current = window.setTimeout(() => {
+        void poll();
+      }, delayMs);
+    };
+
+    const poll = async () => {
+      if (!mountedRef.current) return;
+
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+        if (!hasLoadedRef.current) {
+          setError(new Error('Offline'));
+          setLoading(false);
+        }
+        scheduleNext(OFFLINE_POLL_INTERVAL_MS);
+        return;
+      }
+
+      const ok = await fetchTransitState();
+      if (!mountedRef.current) return;
+
+      if (ok) {
+        scheduleNext(POLL_INTERVAL_MS);
+        return;
+      }
+
+      const retryDelay = Math.min(
+        ERROR_MAX_RETRY_MS,
+        ERROR_BASE_RETRY_MS * (2 ** Math.min(6, retryCountRef.current - 1)),
+      );
+      scheduleNext(retryDelay);
+    };
+
+    const onOnline = () => {
+      retryCountRef.current = 0;
+      void poll();
+    };
+
+    const onOffline = () => {
+      if (!hasLoadedRef.current) {
+        setError(new Error('Offline'));
+        setLoading(false);
+      }
+    };
+
+    window.addEventListener('online', onOnline);
+    window.addEventListener('offline', onOffline);
+    void poll();
 
     return () => {
-      window.clearInterval(interval);
+      mountedRef.current = false;
+      clearTimer();
+      window.removeEventListener('online', onOnline);
+      window.removeEventListener('offline', onOffline);
     };
   }, [fetchTransitState]);
 
