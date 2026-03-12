@@ -19,6 +19,12 @@ import { EnergyParticles } from './EnergyParticles';
 import { EquilibriumLine } from './EquilibriumLine';
 import { RingOverlays } from './RingOverlays';
 import { FallbackCanvas2D } from './FallbackCanvas2D';
+import { PostFX } from './PostFX';
+import { GhostRings } from './GhostRings';
+import { CameraRig, type CameraRigHandle } from './CameraRig';
+import { ShockwaveRings, type ShockwaveRingsHandle } from './ShockwaveRings';
+import { SpikeGlowTips } from './SpikeGlowTips';
+import { NebulaBg } from './NebulaBg';
 
 import { useFusionSignal } from '@/src/hooks/useFusionSignal';
 import { useSpaceWeather } from '@/src/hooks/useSpaceWeather';
@@ -115,11 +121,21 @@ export const FusionRing3D = ({
 
   const [isLowEndDevice, setIsLowEndDevice] = useState<boolean>(false);
   const [forceFallback, setForceFallback] = useState<boolean>(false);
+  const [isUserControlling, setIsUserControlling] = useState<boolean>(false);
 
   const { signalData, events, resolution, loading, error } = useFusionSignal(userId);
   const { kpIndex } = useSpaceWeather();
 
   const { playSpikeChime, toggleMute, isMuted } = useRingAudio(signalData);
+
+  const cameraRigRef    = useRef<CameraRigHandle>(null);
+  const shockwaveRef    = useRef<ShockwaveRingsHandle>(null);
+
+  const peakSector = useMemo(() => {
+    if (!signalData) return 0;
+    const max = Math.max(...signalData.targetSignals);
+    return signalData.targetSignals.indexOf(max);
+  }, [signalData]);
 
   const shouldFallback = !!prefersReducedMotion || isLowEndDevice || forceFallback || !!error;
 
@@ -137,6 +153,8 @@ export const FusionRing3D = ({
       if (!isMuted) {
         playSpikeChime(sector);
       }
+      cameraRigRef.current?.triggerJolt();
+      shockwaveRef.current?.addShockwave(sector);
       onSpikeClick?.(sector);
     },
     [isMuted, onSpikeClick, playSpikeChime],
@@ -225,9 +243,17 @@ export const FusionRing3D = ({
             <PerformanceGuard onLowPerformance={() => setForceFallback(true)} />
 
             <color attach="background" args={['#020509']} />
+
+            {/* Background nebula — rendered first (lowest z) */}
+            <NebulaBg transitIntensity={signalData.transitIntensity} />
+
             <ambientLight intensity={0.5} />
             <pointLight position={[4, 6, 6]} intensity={0.9} color="#9ed7ff" />
             <pointLight position={[-6, -4, 4]} intensity={0.45} color="#ffc76d" />
+
+            <CameraRig ref={cameraRigRef} peakSector={peakSector} />
+
+            <GhostRings signalData={signalData} reducedMotion={!!prefersReducedMotion} />
 
             <RingMesh
               signalData={signalData}
@@ -240,6 +266,8 @@ export const FusionRing3D = ({
             <EnergyParticles transitIntensity={signalData.transitIntensity} reducedMotion={!!prefersReducedMotion} />
 
             <DivergenceSpikes events={events} onSpikeEruption={handleSpikeEruption} />
+            <SpikeGlowTips events={events} />
+            <ShockwaveRings ref={shockwaveRef} />
 
             <RingOverlays
               events={events}
@@ -261,7 +289,13 @@ export const FusionRing3D = ({
               minPolarAngle={Math.PI / 2.3}
               maxPolarAngle={Math.PI / 1.75}
               rotateSpeed={0.35}
+              autoRotate={!isUserControlling}
+              autoRotateSpeed={0.4}
+              onStart={() => setIsUserControlling(true)}
+              onEnd={() => setIsUserControlling(false)}
             />
+
+            <PostFX />
           </Suspense>
         </Canvas>
       </CanvasBoundary>

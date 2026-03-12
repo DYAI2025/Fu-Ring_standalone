@@ -10,6 +10,7 @@ uniform float uKpIndex;
 
 varying vec2 vUv;
 varying vec3 vWorldPos;
+varying vec3 vNormal;
 varying float vSignalStrength;
 varying float vSectorIndex;
 
@@ -48,6 +49,8 @@ void main() {
   float totalDeformation = deformedSignal * uDeformationScale + breath + stormBoost;
   pos += normal * totalDeformation;
 
+  // Pass world-space normal for Fresnel in fragment shader
+  vNormal = normalize(normalMatrix * normal);
   vWorldPos = (modelMatrix * vec4(pos, 1.0)).xyz;
   gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
 }

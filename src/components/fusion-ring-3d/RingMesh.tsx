@@ -37,6 +37,8 @@ type RingUniforms = {
   uPulseIntensity: THREE.IUniform<number>;
   uKpIndex: THREE.IUniform<number>;
   uGlowBlur: THREE.IUniform<number>;
+  uCameraPos: THREE.IUniform<THREE.Vector3>;
+  uOpacityScale: THREE.IUniform<number>;
 };
 
 export const RingMesh = ({ signalData, kpIndex, reducedMotion, pulseSeed }: RingMeshProps) => {
@@ -45,15 +47,17 @@ export const RingMesh = ({ signalData, kpIndex, reducedMotion, pulseSeed }: Ring
   const pulseRef = useRef<number>(0);
 
   const uniforms = useMemo<RingUniforms>(() => ({
-    uTime: { value: 0 },
-    uSignals: { value: new Float32Array(12) },
-    uColors: { value: SECTOR_COLORS },
-    uBaseRadius: { value: 3 },
+    uTime:             { value: 0 },
+    uSignals:          { value: new Float32Array(12) },
+    uColors:           { value: SECTOR_COLORS },
+    uBaseRadius:       { value: 3 },
     uDeformationScale: { value: 1.35 },
-    uBreathAmplitude: { value: reducedMotion ? 0 : 0.045 },
-    uPulseIntensity: { value: 0 },
-    uKpIndex: { value: kpIndex },
-    uGlowBlur: { value: 36 },
+    uBreathAmplitude:  { value: reducedMotion ? 0 : 0.045 },
+    uPulseIntensity:   { value: 0 },
+    uKpIndex:          { value: kpIndex },
+    uGlowBlur:         { value: 36 },
+    uCameraPos:        { value: new THREE.Vector3() },
+    uOpacityScale:     { value: 1.0 },
   }), [kpIndex, reducedMotion]);
 
   useEffect(() => {
@@ -69,6 +73,7 @@ export const RingMesh = ({ signalData, kpIndex, reducedMotion, pulseSeed }: Ring
     if (!material) return;
 
     material.uniforms.uTime.value = state.clock.elapsedTime;
+    material.uniforms.uCameraPos.value.copy(state.camera.position);
 
     const targetSignals = signalData.targetSignals;
     const current = currentSignalsRef.current;
