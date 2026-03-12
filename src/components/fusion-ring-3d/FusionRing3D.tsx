@@ -160,8 +160,8 @@ export const FusionRing3D = ({
 
   const [isLowEndDevice, setIsLowEndDevice] = useState<boolean>(false);
   const [forceFallback, setForceFallback] = useState<boolean>(false);
-  const [isUserControlling, setIsUserControlling] = useState<boolean>(false);
   const [isTestPanelCollapsed, setIsTestPanelCollapsed] = useState<boolean>(false);
+  const [crunchSeed, setCrunchSeed] = useState<number>(0);
   const [visualState, setVisualState] = useState<FusionVisualState>('IDLE');
   const [activeEventType, setActiveEventType] = useState<FusionDebugEventType | null>(null);
   const [magnetPulseBoost, setMagnetPulseBoost] = useState<number>(0);
@@ -532,13 +532,24 @@ export const FusionRing3D = ({
     setManualEvents([]);
   }, [clearMagnetTimer, clearSequenceTimers]);
 
+  // Trigger crunch on intense PAIRING state
+  useEffect(() => {
+    if (visualState === 'PAIRING') {
+      setCrunchSeed((s) => s + 1);
+    }
+  }, [visualState]);
+
   const handleSpikeEruption = useCallback(
-    (sector: number) => {
+    (sector: number, delta: number) => {
       if (!isMuted) {
         playSpikeChime(sector);
       }
       cameraRigRef.current?.triggerJolt();
       shockwaveRef.current?.addShockwave(sector);
+      // Crunch on any spike exceeding the intensity threshold
+      if (delta > 0.55) {
+        setCrunchSeed((s) => s + 1);
+      }
       onSpikeClick?.(sector);
     },
     [isMuted, onSpikeClick, playSpikeChime],
@@ -639,13 +650,14 @@ export const FusionRing3D = ({
 
             <CameraRig ref={cameraRigRef} peakSector={peakSector} />
 
-            <GhostRings signalData={activeSignalData} reducedMotion={!!prefersReducedMotion} />
+            <GhostRings signalData={activeSignalData} reducedMotion={!!prefersReducedMotion} crunchSeed={crunchSeed} />
 
             <RingMesh
               signalData={activeSignalData}
               kpIndex={kpIndex}
               reducedMotion={!!prefersReducedMotion}
               pulseSeed={combinedEvents.length}
+              crunchSeed={crunchSeed}
             />
 
             <EquilibriumLine thirtyDayAvg={activeSignalData.thirtyDayAvg} />
@@ -680,17 +692,14 @@ export const FusionRing3D = ({
               }}
             />
 
+            {/* No autoRotate — ring is steady so sector deformations are clearly readable */}
             <OrbitControls
               enabled={isInteractive}
               enablePan={false}
               enableZoom={false}
-              minPolarAngle={Math.PI / 2.3}
-              maxPolarAngle={Math.PI / 1.75}
+              minPolarAngle={Math.PI / 2 - 0.15}
+              maxPolarAngle={Math.PI / 2 + 0.15}
               rotateSpeed={0.35}
-              autoRotate={!isUserControlling}
-              autoRotateSpeed={0.4}
-              onStart={() => setIsUserControlling(true)}
-              onEnd={() => setIsUserControlling(false)}
             />
 
             <PostFX />

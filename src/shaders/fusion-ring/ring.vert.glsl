@@ -7,6 +7,7 @@ uniform float uBaseRadius;
 uniform float uDeformationScale;
 uniform float uBreathAmplitude;
 uniform float uKpIndex;
+uniform float uCrunchIntensity;  // 0 = normal, 1 = fully crunched to ball
 
 varying vec2 vUv;
 varying vec3 vWorldPos;
@@ -48,6 +49,15 @@ void main() {
 
   float totalDeformation = deformedSignal * uDeformationScale + breath + stormBoost;
   pos += normal * totalDeformation;
+
+  // ── Crunch-to-ball ────────────────────────────────────────────
+  // Shrink all vertices toward the torus centre (origin).
+  // At uCrunchIntensity=1 the ring compresses to ~10% of its size
+  // creating a tight glowing ball, then springs back to normal.
+  // High-frequency noise at peak crunch gives an "fighting against gravity" look.
+  float crunchNoise = sin(uTime * 28.0 + vSectorIndex * 4.2) * uCrunchIntensity * 0.22;
+  pos += normal * crunchNoise;
+  pos = pos * (1.0 - uCrunchIntensity * 0.90);
 
   // Pass world-space normal for Fresnel in fragment shader
   vNormal = normalize(normalMatrix * normal);

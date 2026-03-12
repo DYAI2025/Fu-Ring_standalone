@@ -6,7 +6,8 @@ import type { TransitEvent } from '@/src/lib/schemas/transit-state';
 
 type DivergenceSpikesProps = {
   events: TransitEvent[];
-  onSpikeEruption: (sector: number) => void;
+  /** Called when a spike first appears. `delta` is the event magnitude 0-1+. */
+  onSpikeEruption: (sector: number, delta: number) => void;
 };
 
 const SECTOR_COLORS = [
@@ -50,7 +51,7 @@ export const DivergenceSpikes = ({ events, onSpikeEruption }: DivergenceSpikesPr
 
       if (!emittedIdsRef.current.has(event.id)) {
         emittedIdsRef.current.add(event.id);
-        onSpikeEruption(event.sector);
+        onSpikeEruption(event.sector, event.delta);
       }
     });
 
@@ -72,11 +73,12 @@ export const DivergenceSpikes = ({ events, onSpikeEruption }: DivergenceSpikesPr
       <instancedMesh
         ref={meshRef}
         args={[undefined, undefined, Math.max(1, activeEvents.length)]}
-        onClick={(event) => {
+      onClick={(event) => {
           const instanceId = event.instanceId;
-          if (instanceId == null || !activeEvents[instanceId]) return;
+          const clicked = activeEvents[instanceId ?? -1];
+          if (instanceId == null || !clicked) return;
           event.stopPropagation();
-          onSpikeEruption(activeEvents[instanceId].sector);
+          onSpikeEruption(clicked.sector, clicked.delta);
         }}
       >
         <coneGeometry args={[0.16, 1.05, 4]} />

@@ -10,6 +10,8 @@ type RingMeshProps = {
   kpIndex: number;
   reducedMotion: boolean;
   pulseSeed: number;
+  /** Increment to trigger the crunch-to-ball animation. */
+  crunchSeed: number;
 };
 
 const SECTOR_COLORS = [
@@ -39,25 +41,31 @@ type RingUniforms = {
   uGlowBlur: THREE.IUniform<number>;
   uCameraPos: THREE.IUniform<THREE.Vector3>;
   uOpacityScale: THREE.IUniform<number>;
+  uCrunchIntensity: THREE.IUniform<number>;
 };
 
-export const RingMesh = ({ signalData, kpIndex, reducedMotion, pulseSeed }: RingMeshProps) => {
+export const RingMesh = ({ signalData, kpIndex, reducedMotion, pulseSeed, crunchSeed }: RingMeshProps) => {
   const materialRef = useRef<THREE.ShaderMaterial>(null);
   const currentSignalsRef = useRef<Float32Array>(new Float32Array(12));
   const pulseRef = useRef<number>(0);
+
+  // ── Crunch spring animation state ────────────────────────────
+  const crunchPhaseRef = useRef<'idle' | 'crunching' | 'releasing'>('idle');
+  const crunchValueRef = useRef<number>(0);
 
   const uniforms = useMemo<RingUniforms>(() => ({
     uTime:             { value: 0 },
     uSignals:          { value: new Float32Array(12) },
     uColors:           { value: SECTOR_COLORS },
     uBaseRadius:       { value: 3 },
-    uDeformationScale: { value: 1.35 },
+    uDeformationScale: { value: 2.2 },   // ↑ increased from 1.35 for visible sector bumps
     uBreathAmplitude:  { value: reducedMotion ? 0 : 0.045 },
     uPulseIntensity:   { value: 0 },
     uKpIndex:          { value: kpIndex },
     uGlowBlur:         { value: 36 },
     uCameraPos:        { value: new THREE.Vector3() },
     uOpacityScale:     { value: 1.0 },
+    uCrunchIntensity:  { value: 0 },
   }), [kpIndex, reducedMotion]);
 
   useEffect(() => {
@@ -67,6 +75,13 @@ export const RingMesh = ({ signalData, kpIndex, reducedMotion, pulseSeed }: Ring
   useEffect(() => {
     pulseRef.current = 1;
   }, [pulseSeed]);
+
+  // Trigger crunch-to-ball on every new crunchSeed
+  useEffect(() => {
+    if (crunchSeed === 0) return;
+    crunchPhaseRef.current = 'crunching';
+    crunchValueRef.current = 0;
+  }, [crunchSeed]);
 
   useFrame((state, delta) => {
     const material = materialRef.current;
@@ -87,8 +102,29 @@ export const RingMesh = ({ signalData, kpIndex, reducedMotion, pulseSeed }: Ring
     if (pulseRef.current > 0.001) {
       pulseRef.current = THREE.MathUtils.lerp(pulseRef.current, 0, Math.min(1, delta * 4));
     }
-
     material.uniforms.uPulseIntensity.value = pulseRef.current;
+
+    // ── Crunch spring ─────────────────────────────────────────────
+    if (crunchPhaseRef.current === 'crunching') {
+      // Fast snap in: reaches ~0.97 in ~0.12 s
+      crunchValueRef.current = THREE.MathUtils.lerp(
+        crunchValueRef.current, 1, Math.min(1, delta * 18),
+      );
+      if (crunchValueRef.current > 0.97) {
+        crunchPhaseRef.current = 'releasing';
+      }
+    } else if (crunchPhaseRef.current === 'releasing') {
+      // Slow elastic spring back: ~1.4 s to decay to zero
+      crunchValueRef.current = THREE.MathUtils.lerp(
+        crunchValueRef.current, 0, Math.min(1, delta * 1.4),
+      );
+      if (crunchValueRef.current < 0.01) {
+        crunchPhaseRef.current = 'idle';
+        crunchValueRef.current = 0;
+      }
+    }
+
+    material.uniforms.uCrunchIntensity.value = crunchValueRef.current;
   });
 
   return (

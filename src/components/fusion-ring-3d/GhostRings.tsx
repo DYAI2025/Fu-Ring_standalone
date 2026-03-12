@@ -23,28 +23,30 @@ const SECTOR_COLORS = [
 type GhostRingMeshProps = {
   radius: number;
   tube: number;
-  rotationDir: 1 | -1;
-  rotationSpeed: number;
   opacityScale: number;
   deformationScale: number;
   signalData: FusionSignalData;
   reducedMotion: boolean;
+  /** Increment to trigger crunch animation on this ghost ring. */
+  crunchSeed: number;
 };
 
 const GhostRingMesh = ({
   radius,
   tube,
-  rotationDir,
-  rotationSpeed,
   opacityScale,
   deformationScale,
   signalData,
   reducedMotion,
+  crunchSeed,
 }: GhostRingMeshProps) => {
-  const groupRef = useRef<THREE.Group>(null);
   const materialRef = useRef<THREE.ShaderMaterial>(null);
   const currentSignalsRef = useRef<Float32Array>(new Float32Array(12));
   const { camera } = useThree();
+
+  // ── Crunch spring ────────────────────────────────────────────
+  const crunchPhaseRef = useRef<'idle' | 'crunching' | 'releasing'>('idle');
+  const crunchValueRef = useRef<number>(0);
 
   const uniforms = useMemo(() => ({
     uTime:             { value: 0 },
@@ -58,16 +60,24 @@ const GhostRingMesh = ({
     uGlowBlur:         { value: 48 },
     uCameraPos:        { value: new THREE.Vector3() },
     uOpacityScale:     { value: opacityScale },
+    uCrunchIntensity:  { value: 0 },
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }), []);
 
-  useFrame((state, delta) => {
-    const group = groupRef.current;
-    const material = materialRef.current;
-    if (!group || !material) return;
+  // Trigger crunch on each ghost ring when seed changes
+  useMemo(() => {
+    if (crunchSeed === 0) return;
+    crunchPhaseRef.current = 'crunching';
+    crunchValueRef.current = 0;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [crunchSeed]);
 
-    // Rotate the ghost ring
-    group.rotation.z += rotationDir * rotationSpeed * delta;
+  useFrame((state, delta) => {
+    const material = materialRef.current;
+    if (!material) return;
+
+    // Ghost rings are now STATIC — no self-rotation.
+    // They mirror the main ring deformations at different radii.
 
     // Update time and camera position
     material.uniforms.uTime.value = state.clock.elapsedTime;
@@ -81,10 +91,28 @@ const GhostRingMesh = ({
       current[i] = THREE.MathUtils.lerp(current[i], target, Math.min(1, delta * 2.2));
       material.uniforms.uSignals.value[i] = current[i];
     }
+
+    // ── Crunch spring (ghost follows main ring, slight delay via slower lerp) ──
+    if (crunchPhaseRef.current === 'crunching') {
+      crunchValueRef.current = THREE.MathUtils.lerp(
+        crunchValueRef.current, 1, Math.min(1, delta * 14),
+      );
+      if (crunchValueRef.current > 0.97) crunchPhaseRef.current = 'releasing';
+    } else if (crunchPhaseRef.current === 'releasing') {
+      crunchValueRef.current = THREE.MathUtils.lerp(
+        crunchValueRef.current, 0, Math.min(1, delta * 1.1),
+      );
+      if (crunchValueRef.current < 0.01) {
+        crunchPhaseRef.current = 'idle';
+        crunchValueRef.current = 0;
+      }
+    }
+
+    material.uniforms.uCrunchIntensity.value = crunchValueRef.current;
   });
 
   return (
-    <group ref={groupRef} rotation={[0, 0, Math.PI / 2]}>
+    <group rotation={[0, 0, Math.PI / 2]}>
       <mesh>
         <torusGeometry args={[radius, tube, 64, 192]} />
         <shaderMaterial
@@ -105,39 +133,40 @@ const GhostRingMesh = ({
 type GhostRingsProps = {
   signalData: FusionSignalData;
   reducedMotion: boolean;
+  crunchSeed: number;
 };
 
 /**
- * Two ghost copies of the main ring that create a layered gyroscope effect.
+ * Two static ghost copies of the main ring at different radii.
+ * They show sector deformations at their own scale, amplifying the
+ * visual depth of the signal landscape without adding rotation noise.
  *
- * - Inner ghost (r=2.4): counter-rotates, slightly less deformation
- * - Outer halo  (r=3.7): slow co-rotation, very light presence
+ * - Inner echo  (r=2.4): lower deformation, shows subtle counter-signal
+ * - Outer halo  (r=3.7): very faint, extends the field envelope
  */
-export const GhostRings = ({ signalData, reducedMotion }: GhostRingsProps) => {
+export const GhostRings = ({ signalData, reducedMotion, crunchSeed }: GhostRingsProps) => {
   return (
     <>
-      {/* Inner ghost — counter-clockwise, medium opacity */}
+      {/* Inner echo — static, medium opacity */}
       <GhostRingMesh
         radius={2.4}
         tube={0.12}
-        rotationDir={-1}
-        rotationSpeed={0.28}
         opacityScale={0.28}
-        deformationScale={0.7}
+        deformationScale={0.9}
         signalData={signalData}
         reducedMotion={reducedMotion}
+        crunchSeed={crunchSeed}
       />
 
-      {/* Outer halo — slow clockwise, very translucent */}
+      {/* Outer halo — static, very translucent */}
       <GhostRingMesh
         radius={3.7}
         tube={0.08}
-        rotationDir={1}
-        rotationSpeed={0.04}
         opacityScale={0.13}
-        deformationScale={0.4}
+        deformationScale={0.5}
         signalData={signalData}
         reducedMotion={reducedMotion}
+        crunchSeed={crunchSeed}
       />
     </>
   );
