@@ -129,7 +129,7 @@ export const RingMesh = ({ signalData, kpIndex, reducedMotion, pulseSeed, crunch
 
   return (
     <mesh rotation={[0, 0, Math.PI / 2]}>
-      <torusGeometry args={[3, 0.2, 96, 256]} />
+      <torusGeometry args={[3, 0.4, 64, 192]} />
       <shaderMaterial
         ref={materialRef}
         uniforms={uniforms}

@@ -114,7 +114,7 @@ const GhostRingMesh = ({
   return (
     <group rotation={[0, 0, Math.PI / 2]}>
       <mesh>
-        <torusGeometry args={[radius, tube, 64, 192]} />
+        <torusGeometry args={[radius, tube, 48, 144]} />
         <shaderMaterial
           ref={materialRef}
           uniforms={uniforms}
@@ -147,10 +147,10 @@ type GhostRingsProps = {
 export const GhostRings = ({ signalData, reducedMotion, crunchSeed }: GhostRingsProps) => {
   return (
     <>
-      {/* Inner echo — static, medium opacity */}
+      {/* Inner echo — static, medium opacity, thicker tube for structure */}
       <GhostRingMesh
         radius={2.4}
-        tube={0.12}
+        tube={0.22}
         opacityScale={0.28}
         deformationScale={0.9}
         signalData={signalData}
@@ -161,7 +161,7 @@ export const GhostRings = ({ signalData, reducedMotion, crunchSeed }: GhostRings
       {/* Outer halo — static, very translucent */}
       <GhostRingMesh
         radius={3.7}
-        tube={0.08}
+        tube={0.15}
         opacityScale={0.13}
         deformationScale={0.5}
         signalData={signalData}

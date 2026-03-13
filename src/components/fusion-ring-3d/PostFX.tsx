@@ -6,19 +6,19 @@ import { BlendFunction } from 'postprocessing';
 /**
  * Post-processing stack for the Fu-Ring.
  *
- * - Bloom: makes the ring surface bleed light into surrounding space
+ * - Bloom: subtle light bleed — kept low so tube structure stays visible
  * - ChromaticAberration: splits colour channels at grazing angles → plasma feel
  * - Vignette: deepens the cosmic void around the ring
  */
 export const PostFX = () => {
-  const chromaOffset = useMemo(() => new THREE.Vector2(0.0005, 0.0005), []);
+  const chromaOffset = useMemo(() => new THREE.Vector2(0.0004, 0.0004), []);
 
   return (
     <EffectComposer>
       <Bloom
-        luminanceThreshold={0.15}
-        luminanceSmoothing={0.4}
-        intensity={1.8}
+        luminanceThreshold={0.28}
+        luminanceSmoothing={0.35}
+        intensity={0.85}
         mipmapBlur
       />
       <ChromaticAberration
@@ -28,7 +28,7 @@ export const PostFX = () => {
         modulationOffset={0}
       />
       <Vignette
-        darkness={0.6}
+        darkness={0.55}
         offset={0.35}
         blendFunction={BlendFunction.NORMAL}
       />

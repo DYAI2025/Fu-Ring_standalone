@@ -103,16 +103,23 @@ type PerformanceGuardProps = {
   onLowPerformance: () => void;
 };
 
+const PERF_GRACE_SECONDS = 3; // ignore slow frames during shader compilation
+const PERF_SLOW_THRESHOLD = 120; // cumulative slow frames before fallback
+
 const PerformanceGuard = ({ onLowPerformance }: PerformanceGuardProps) => {
   const slowFramesRef = useRef<number>(0);
   const triggeredRef = useRef<boolean>(false);
+  const elapsedRef = useRef<number>(0);
 
   useFrame((_, delta) => {
     if (triggeredRef.current) return;
+    elapsedRef.current += delta;
+    // Grace period: shader compilation causes initial hitches
+    if (elapsedRef.current < PERF_GRACE_SECONDS) return;
     if (delta > 0.05) {
       slowFramesRef.current += 1;
     }
-    if (slowFramesRef.current > 35) {
+    if (slowFramesRef.current > PERF_SLOW_THRESHOLD) {
       triggeredRef.current = true;
       onLowPerformance();
     }
